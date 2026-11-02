@@ -78,11 +78,11 @@ jobs:
           [ -n "$SINCE" ] && args+=(--since "$SINCE")
           [ -n "$UNTIL" ] && args+=(--until "$UNTIL")
           [ "$NOPRE" = "true" ] && args+=(--no-prefilter)
-          python run.py "${args[@]}" 2>&1 | grep -v "INFO: Fetched" | tee output/log.txt
+          python run.py "${args[@]}" 2>&1 | grep -v "INFO: Fetched" | tee output/console.txt
           {
             echo "## Hasil scraping"
             echo '```'
-            sed -n '/Ringkasan per media/,$p' output/log.txt
+            sed -n '/Ringkasan per media/,$p' output/console.txt
             echo '```'
             echo "### Kategori"
             echo '```'
@@ -100,3 +100,4 @@ jobs:
             scraper/output/kategori_ringkasan.csv
             scraper/output/sna_explorer.csv
             scraper/output/log.txt
+            scraper/output/console.txt

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -110,8 +111,13 @@ def main(argv=None):
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
-    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
-                        format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    os.makedirs(args.out, exist_ok=True)
+    fmt = "%(asctime)s %(levelname)s %(name)s: %(message)s"
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO, format=fmt,
+                        handlers=[logging.StreamHandler(),
+                                  logging.FileHandler(os.path.join(args.out, "log.txt"), encoding="utf-8")])
+    if not args.verbose:  # baris "Fetched (200) <GET …>" per permintaan terlalu ramai untuk konsol
+        logging.getLogger("scrapling").setLevel(logging.WARNING)
     cfg = yaml.safe_load(open(args.sources_file, encoding="utf-8"))
     dflt = cfg.get("defaults", {})
     args.delay = args.delay if args.delay is not None else float(dflt.get("delay_seconds", 2.5))

@@ -25,6 +25,12 @@ pip install -r requirements.txt
 scrapling install        # opsional: unduh browser untuk mode --stealth / fallback anti-bot
 ```
 
+## Windows: cara paling mudah
+
+Klik dua kali `jalankan_scraper.bat`. Pada percobaan pertama, file ini membuat lingkungan Python dan memasang
+Scrapling. Setelah itu ia menanyakan tanggal, media, dan batas artikel, lalu membuka folder `output\` setelah selesai.
+Python 3.10 atau lebih baru harus sudah terpasang.
+
 ## Pemakaian
 
 ```bash
