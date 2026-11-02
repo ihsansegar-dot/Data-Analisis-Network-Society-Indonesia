@@ -87,7 +87,8 @@ class PoliteFetcher:
         if self.stealth:
             return self._stealth_get(url)
         r = self._get_session().get(url)
-        if r.status in (403, 429, 503) and not self.stealth:
+        # 202/403/429/503: biasanya halaman tantangan anti-bot (run 3: Tribunnews menjawab 202 untuk semua halaman)
+        if r.status in (202, 403, 429, 503) and not self.stealth:
             log.info("HTTP %s di %s — coba StealthyFetcher", r.status, url)
             try:
                 r2 = self._stealth_get(url)

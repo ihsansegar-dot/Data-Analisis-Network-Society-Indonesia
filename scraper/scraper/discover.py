@@ -206,6 +206,9 @@ def from_index_pages(fetcher, source, since, until, max_days=62) -> list[Candida
             r = fetcher.get(url)
             if r is None:
                 continue
+            # dialihkan ke halaman lain (mis. indeks hari ini): tautannya bukan milik tanggal ini
+            if r.url and r.url.rstrip("/") != url.rstrip("/") and f"{day.day:02d}" not in r.url:
+                continue
             before = len(out)
             for a in r.css("a[href]"):
                 href = urljoin(r.url, a.attrib.get("href", ""))

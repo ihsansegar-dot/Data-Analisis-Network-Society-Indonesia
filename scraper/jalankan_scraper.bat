@@ -31,6 +31,11 @@ if not exist ".venv\.terpasang" (
   "%VPY%" -m pip install -q -r requirements.txt || (echo Gagal memasang dependensi. & pause & exit /b 1)
   echo ok> ".venv\.terpasang"
 )
+if not exist ".venv\.browser" (
+  echo Memasang browser untuk situs yang memblokir scraper, sekali saja, bisa beberapa menit...
+  ".venv\Scripts\scrapling.exe" install && echo ok> ".venv\.browser"
+  if not exist ".venv\.browser" echo Browser gagal dipasang; situs yang memblokir akan dilewati.
+)
 
 rem --- parameter ---
 echo.

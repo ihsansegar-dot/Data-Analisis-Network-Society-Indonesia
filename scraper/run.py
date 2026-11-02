@@ -64,13 +64,22 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
             # judul (news sitemap / RSS) atau slug URL harus memuat istilah konteks; kandidat tanpa
             # judul dan slug tak informatif tetap dilewati — gunakan --no-prefilter bila perlu cakupan penuh
             cands = [c for c in cands if clf.prefilter(c.title + " " + urlparse(c.url).path)]
-        n, streak_out = 0, 0
+        n, streak_out, bad_via, last_via = 0, 0, set(), None
         for c in cands:
             if n >= args.max_per_source:
                 break
+            if c.via in bad_via:
+                continue
             if streak_out >= 15:
-                log.info("%s: 15 unduhan berturut-turut di luar rentang tanggal; berhenti.", src["domain"])
-                break
+                # run 3: kandidat dari halaman indeks Tempo ternyata bertanggal November; jangan hentikan seluruh
+                # sumber, cukup tinggalkan jalur penemuan (sitemap/rss/indeks) yang bermasalah
+                log.info("%s: 15 unduhan berturut-turut di luar rentang dari jalur '%s'; jalur ini dilewati.",
+                         src["domain"], last_via)
+                bad_via.add(last_via)
+                streak_out = 0
+                if len(bad_via) >= 3:
+                    break
+                continue
             if store.is_seen(c.url):
                 continue
             if not f.allowed(c.url):
@@ -92,7 +101,8 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
             d = parse_date(art["published"]) or c.published
             if d and ((since and d < since) or (until and d > until)):
                 stats["luar_tanggal"] += 1
-                streak_out += 1
+                streak_out = streak_out + 1 if c.via == last_via else 1
+                last_via = c.via
                 continue
             streak_out = 0
             if not art["title"] and c.title:
