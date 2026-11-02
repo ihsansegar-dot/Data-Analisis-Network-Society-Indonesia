@@ -140,6 +140,8 @@ def main(argv=None):
     ap.add_argument("--group", help="hanya grup tertentu: nasional / daerah / islam")
     ap.add_argument("--since", type=user_date, help="YYYY-MM-DD (default: 7 hari terakhir)")
     ap.add_argument("--until", type=user_date, help="YYYY-MM-DD (inklusif)")
+    ap.add_argument("--last-days", type=int, help="ambil N hari terakhir termasuk hari ini (untuk jadwal harian); "
+                    "mengabaikan --since/--until")
     ap.add_argument("--max-per-source", type=int, default=None)
     ap.add_argument("--delay", type=float, default=None, help="jeda antar-permintaan per domain (detik)")
     ap.add_argument("--workers", type=int, default=6, help="jumlah domain yang diproses paralel")
@@ -177,8 +179,12 @@ def main(argv=None):
         sys.exit(2)
 
     now = datetime.now(WIB)
-    since = args.since or now - timedelta(days=7)
-    until = (args.until + timedelta(days=1) - timedelta(seconds=1)) if args.until else now
+    if args.last_days:
+        start = now.replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=args.last_days - 1)
+        since, until = start, now
+    else:
+        since = args.since or now - timedelta(days=7)
+        until = (args.until + timedelta(days=1) - timedelta(seconds=1)) if args.until else now
     if since > until:
         log.error("Tanggal mulai (%s) setelah tanggal akhir (%s).", since.date(), until.date())
         sys.exit(2)

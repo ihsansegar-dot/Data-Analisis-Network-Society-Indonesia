@@ -67,6 +67,20 @@ Catatan:
   Bila sebuah media selalu `kandidat=0` atau `gagal` tinggi di GitHub, jalankan untuk media itu dari komputer lokal.
 - Setiap push ke `scraper/` otomatis menjalankan uji.
 
+## Scraping otomatis harian (Windows)
+
+1. Pastikan `jalankan_scraper.bat` sudah pernah dijalankan sekali (menyiapkan Python dan Scrapling).
+2. Klik dua kali `pasang_jadwal_harian.bat` dan isi jamnya (bawaan 06:17). File ini membuat tugas Windows Task Scheduler
+   bernama "NSI News Scraper Harian".
+3. Setiap hari pada jam itu, `jalankan_harian.bat` mengambil berita **2 hari terakhir** dari semua media (maks. 30 artikel
+   baru per media per hari) dan menggabungkannya ke `output_harian\`. Artikel yang sudah ada tidak diunduh ulang, dan
+   `output_harian\sna_explorer.csv` selalu berisi seluruh hasil kumulatif.
+4. Riwayat jalannya jadwal ada di `jadwal_harian.log`; keluaran run terakhir ada di `output_harian\terakhir.txt`.
+5. Untuk menghentikan, klik dua kali `hapus_jadwal_harian.bat`.
+
+Komputer harus menyala dan pengguna sedang login pada jam yang dijadwalkan. Karena setiap run mengambil 2 hari, satu hari
+yang terlewat tetap tertutup oleh run berikutnya; lebih dari itu perlu dijalankan manual dengan `--since/--until`.
+
 ## Alur kerja
 
 1. **Penemuan URL**: baris `Sitemap:` di robots.txt, lalu lokasi sitemap umum (news sitemap diutamakan),
