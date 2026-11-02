@@ -1,0 +1,4 @@
+User-agent: *
+Disallow: /admin/
+Disallow: /terlarang/
+Sitemap: https://www.contoh.co.id/sitemap_index.xml

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
+ <url><loc>https://www.contoh.co.id/berita/pks-dan-ppp-bahas-koalisi</loc>
+  <news:news><news:publication_date>2026-10-30T08:00:00+07:00</news:publication_date><news:title>PKS dan PPP Bahas Koalisi Partai Islam Jelang Pilkada</news:title></news:news></url>
+ <url><loc>https://www.contoh.co.id/berita/mui-terbitkan-fatwa</loc>
+  <news:news><news:publication_date>2026-10-29T08:00:00+07:00</news:publication_date><news:title>MUI Terbitkan Fatwa Baru soal Wakaf Produktif</news:title></news:news></url>
+ <url><loc>https://www.contoh.co.id/berita/harga-cabai-naik</loc>
+  <news:news><news:publication_date>2026-10-29T09:00:00+07:00</news:publication_date><news:title>Harga Cabai Naik di Pasar Induk</news:title></news:news></url>
+ <url><loc>https://www.contoh.co.id/terlarang/rahasia-ulama</loc>
+  <news:news><news:publication_date>2026-10-28T09:00:00+07:00</news:publication_date><news:title>Ulama Bicara</news:title></news:news></url>
+ <url><loc>https://www.contoh.co.id/berita/ulama-lama</loc>
+  <news:news><news:publication_date>2026-09-01T09:00:00+07:00</news:publication_date><news:title>Ulama dan Umat di Masa Lalu</news:title></news:news></url>
+ <url><loc>https://www.contoh.co.id/tag/islam</loc><lastmod>2026-10-30</lastmod></url>
+ <url><loc>https://lain.com/berita/islam-luar</loc><lastmod>2026-10-30</lastmod></url>
+</urlset>

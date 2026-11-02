@@ -1,0 +1,101 @@
+# Kamus kategori (codebook awal) untuk identifikasi otomatis.
+# - Semua istilah huruf kecil; dicocokkan per kata/frasa utuh, tidak peka huruf besar/kecil.
+# - Bobot: 3 = sangat khas kategori, 2 = khas, 1 = pendukung (sering muncul di konteks lain).
+# - Kemunculan di JUDUL dihitung x2. Tiap istilah dihitung maksimal 3 kali per artikel.
+# - Artikel diberi label kategori bila skornya >= min_score (multi-label);
+#   kategori utama = skor tertinggi.
+# PENTING: ini titik awal, bukan instrumen yang sudah tervalidasi. Uji dengan sampel
+# yang dikode manual (lihat README) dan sesuaikan istilahnya.
+
+relevance:
+  # Artikel hanya disimpan bila memuat >= min_terms istilah konteks keislaman.
+  min_terms: 2
+  terms: [islam, islami, islamic, muslim, muslimah, umat islam, umat, ummat, ulama, kiai, kyai, ustaz, ustadz,
+          habib, santri, pesantren, masjid, musala, musholla, syariah, syariat, halal, fatwa, mui,
+          majelis ulama indonesia, nahdlatul ulama, nu, pbnu, muhammadiyah, persis, al washliyah, dakwah,
+          zakat, wakaf, haji, umrah, ramadan, ramadhan, idulfitri, iduladha, kemenag, kementerian agama,
+          partai islam, pks, partai keadilan sejahtera, pkb, partai kebangkitan bangsa, ppp,
+          partai persatuan pembangunan, pan, partai amanat nasional, partai bulan bintang, partai ummat,
+          masyumi, ormas islam, alquran, al-quran, quran, nabi, rasulullah, ukhuwah, khilafah]
+
+min_score: 3
+
+categories:
+  identitas_keislaman:
+    label: Identitas keislaman
+    terms:
+      3: [identitas islam, identitas muslim, identitas keislaman, jati diri umat, islamofobia, islamophobia, penistaan agama, penodaan agama, simbol agama, simbol islam, muslim kaffah]
+      2: [hijab, jilbab, busana muslim, hijrah, syariat islam, ukhuwah islamiyah, sertifikasi halal, label halal, gaya hidup halal]
+      1: [syariah, syariat, halal, muslimah, kaffah]
+
+  politik_umat:
+    label: Politik umat
+    terms:
+      3: [politik umat, politik islam, aspirasi umat, suara umat, pemilih muslim, ijtima ulama, aksi 212, gerakan 212, persaudaraan alumni 212, basis pemilih islam, kekuatan politik islam]
+      2: [politik identitas, koalisi umat, dukungan ulama, umat islam memilih, poros islam, capres umat]
+      1: [umat islam, umat, ormas islam]
+
+  moralitas_kepemimpinan_islam:
+    label: Moralitas dan kepemimpinan Islam
+    terms:
+      3: [kepemimpinan islam, pemimpin muslim, pemimpin amanah, akhlakul karimah, teladan rasulullah, uswah hasanah, kepemimpinan profetik]
+      2: [amanah, akhlak, adab, pemimpin adil, zalim, dzalim, khalifah, integritas moral, moralitas]
+      1: [moral, integritas, kejujuran, korupsi]
+
+  nasionalisme_religius:
+    label: Nasionalisme religius
+    terms:
+      3: [nasionalisme religius, hubbul wathan, hubbul wathon, hubbul wathon minal iman, resolusi jihad, islam nusantara, hari santri]
+      2: [cinta tanah air, nkri harga mati, bela negara, wawasan kebangsaan, santri dan negara, nasionalis religius]
+      1: [pancasila, kebangsaan, nkri, bhinneka tunggal ika]
+
+  moderasi_beragama:
+    label: Moderasi beragama
+    terms:
+      3: [moderasi beragama, islam moderat, wasathiyah, washatiyah, rahmatan lil alamin, deradikalisasi, kerukunan umat beragama]
+      2: [toleransi, intoleransi, radikalisme, ekstremisme, terorisme, fkub, dialog antaragama, dialog lintas agama]
+      1: [kerukunan, radikal, moderat, pluralisme]
+
+  ekonomi_umat:
+    label: Ekonomi umat
+    terms:
+      3: [ekonomi umat, ekonomi syariah, ekonomi islam, perbankan syariah, keuangan syariah, bank syariah, industri halal, wakaf produktif, fintech syariah, koperasi syariah]
+      2: [zakat, infak, wakaf, baznas, laznas, sukuk, pariwisata halal, dana haji, bpkh, bsi, bank syariah indonesia]
+      1: [sedekah, umkm, halal]
+
+  pendidikan_sosial_keagamaan:
+    label: Pendidikan dan sosial keagamaan
+    terms:
+      3: [pondok pesantren, pendidikan islam, pendidikan agama islam, madrasah, uu pesantren, majelis taklim, beasiswa santri]
+      2: [pesantren, santri, dakwah, kemenag, kementerian agama, guru ngaji, tpq, pengajian, ormas islam, haji, umrah]
+      1: [masjid, musala, kajian]
+
+  keadilan_sosial:
+    label: Keadilan sosial
+    terms:
+      3: [keadilan sosial, kriminalisasi ulama, ketidakadilan, kaum dhuafa, mustahik]
+      2: [kesenjangan, ketimpangan, kemiskinan, dhuafa, diskriminasi, keadilan hukum, hak asasi manusia]
+      1: [bansos, bantuan sosial, buruh, petani, rakyat kecil, ham]
+
+  politik_kebijakan_publik:
+    label: Politik kebijakan publik
+    terms:
+      3: [kebijakan publik, perda syariah, uu jaminan produk halal, ruu minuman beralkohol, ruu minol, ruu haluan ideologi pancasila, ruu hip, ruu kuhp, rkuhp]
+      2: [rancangan undang-undang, ruu, undang-undang, peraturan daerah, perda, perpres, peraturan pemerintah, legislasi, regulasi, kebijakan pemerintah, omnibus law]
+      1: [dpr, pemilu, pilkada, kpu, bawaslu, kebijakan]
+
+  representasi_ulama_otoritas:
+    label: Representasi ulama dan otoritas keagamaan
+    terms:
+      3: [majelis ulama indonesia, fatwa mui, ijtima ulama, bahtsul masail, majelis tarjih, otoritas keagamaan, rais aam, dewan syariah]
+      2: [ulama, mui, fatwa, kiai, kyai, habib, ustaz, ustadz, buya, tuan guru, tokoh agama, pbnu, pp muhammadiyah]
+      1: [ustazah, ulil amri, pimpinan pesantren]
+
+  partai_islam:
+    label: Partai Islam
+    terms:
+      3: [partai islam, partai keadilan sejahtera, partai kebangkitan bangsa, partai persatuan pembangunan, partai amanat nasional, partai bulan bintang, partai ummat, partai masyumi, partai berbasis islam, partai berbasis massa islam]
+      2: [pks, pkb, ppp, pan, partai gelora, masyumi, fraksi pks, fraksi pkb, fraksi ppp, fraksi pan]
+      1: [koalisi partai islam, kader partai]
+# Catatan ambiguitas: "pbb" sengaja TIDAK dipakai (PBB = Perserikatan Bangsa-Bangsa /
+# Pajak Bumi dan Bangunan / Partai Bulan Bintang). Gunakan "partai bulan bintang".

@@ -2,3 +2,9 @@ node_modules/
 tests/out/
 *.log
 .DS_Store
+
+# scraper
+scraper/output/
+__pycache__/
+.pytest_cache/
+.venv/

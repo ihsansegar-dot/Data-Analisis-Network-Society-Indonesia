@@ -82,3 +82,14 @@ Belum ditentukan oleh pemilik repositori.
 ---
 
 Dikembangkan untuk **Network Society Indonesia**.
+
+## News Scraper (folder `scraper/`)
+
+Scraper berita online Indonesia berbasis Scrapling dengan identifikasi 11 kategori keislaman dan politik
+(identitas keislaman, politik umat, partai Islam, dll.). Keluarannya `sna_explorer.csv` dapat langsung diunggah
+ke aplikasi ini sebagai data Media Online. Panduan lengkap ada di [`scraper/README.md`](scraper/README.md).
+
+```bash
+cd scraper && pip install -r requirements.txt
+python run.py --since 2026-10-01 --until 2026-10-31
+```
