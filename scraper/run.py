@@ -47,7 +47,8 @@ def user_date(s: str) -> datetime:
 
 
 def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFetcher):
-    stats = {"media": src["name"], "kandidat": 0, "diunduh": 0, "relevan": 0, "berlabel": 0, "gagal": 0, "robots": 0}
+    stats = {"media": src["name"], "kandidat": 0, "diunduh": 0, "relevan": 0, "berlabel": 0, "gagal": 0, "robots": 0,
+             "luar_tanggal": 0, "pendek": 0, "tidak_relevan": 0}
     f = fetcher_factory(src["domain"], delay=args.delay, stealth=args.stealth or src.get("stealth", False),
                         respect_robots=not args.ignore_robots)
     try:
@@ -83,13 +84,16 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
                 continue
             d = parse_date(art["published"]) or c.published
             if d and ((since and d < since) or (until and d > until)):
+                stats["luar_tanggal"] += 1
                 continue
             if not art["title"] and c.title:
                 art["title"] = c.title
             if art["n_words"] < args.min_words:
+                stats["pendek"] += 1
                 continue
             res = clf.classify(art["title"], art["body"])
             if not res.relevant:
+                stats["tidak_relevan"] += 1
                 continue
             stats["relevan"] += 1
             stats["berlabel"] += bool(res.labels)
@@ -172,7 +176,8 @@ def main(argv=None):
     print("\nRingkasan per media:")
     for s in sorted(allstats, key=lambda x: -x["relevan"]):
         print(f"  {s['media']:<22} kandidat={s['kandidat']:<5} diunduh={s['diunduh']:<4} "
-              f"relevan={s['relevan']:<4} berlabel={s['berlabel']:<4} gagal={s['gagal']:<3} robots={s['robots']}")
+              f"relevan={s['relevan']:<4} berlabel={s['berlabel']:<4} gagal={s['gagal']:<3} robots={s['robots']:<3} "
+              f"luar_tanggal={s['luar_tanggal']:<3} pendek={s['pendek']:<3} tidak_relevan={s['tidak_relevan']}")
     print(f"\nTotal artikel tersimpan: {paths['n']}")
     for k in ("articles", "summary", "sna", "jsonl"):
         print(f"  {paths[k]}")

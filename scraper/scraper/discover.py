@@ -15,7 +15,22 @@ log = logging.getLogger("discover")
 COMMON_SITEMAPS = ["/sitemap.xml", "/sitemap_index.xml", "/news-sitemap.xml",
                    "/sitemap-news.xml", "/sitemap_news.xml"]
 COMMON_FEEDS = ["/rss", "/feed", "/rss.xml", "/feed/"]
-SKIP_URL = re.compile(r"/(tag|tags|topik|indeks|index|video|foto|galeri|gallery|author|penulis|search|login)(/|$)", re.I)
+SKIP_URL = re.compile(r"/(tag|tags|topik|topic|indeks|index|kanal|channel|kategori|category|arsip|archive|tokoh|"
+                      r"video|videos|foto|fotonews|fototravel|galeri|gallery|infografis|author|penulis|search|login)(/|$)", re.I)
+# subdomain advertorial/konten berbayar (mis. fyb.detik.com) — bukan berita redaksi
+SKIP_HOST = re.compile(r"^(fyb|adv|advertorial|sponsored|partner|brandstory|promo)\.", re.I)
+
+
+def looks_like_article(url: str) -> bool:
+    """Halaman artikel hampir selalu punya slug judul (>=2 tanda hubung) atau ID numerik panjang;
+    halaman kanal/indeks ('/dunia-islam', '/kajian-alquran') tidak."""
+    p = urlparse(url)
+    if SKIP_HOST.match(p.netloc) or SKIP_URL.search(p.path):
+        return False
+    last = [x for x in p.path.split("/") if x]
+    if not last:
+        return False
+    return last[-1].count("-") >= 2 or bool(re.search(r"\d{5,}", p.path))
 
 
 @dataclass
@@ -120,7 +135,7 @@ def walk_sitemap(fetcher, url, domain, since, until, out, seen, depth=0, max_map
         return
     for u in root.findall("url"):
         loc = (u.findtext("loc") or "").strip()
-        if not loc or not _same_site(loc, domain) or SKIP_URL.search(urlparse(loc).path):
+        if not loc or not _same_site(loc, domain) or not looks_like_article(loc):
             continue
         news = u.find("news")
         title = (news.findtext("title") if news is not None else "") or ""
@@ -141,7 +156,7 @@ def parse_feed(resp, domain, since, until) -> list[Candidate]:
         if not link:
             el = it.find("link")
             link = el.get("href", "") if el is not None else ""
-        if not link or not _same_site(link, domain):
+        if not link or not _same_site(link, domain) or not looks_like_article(link):
             continue
         d = parse_date(it.findtext("pubDate") or it.findtext("published") or it.findtext("updated"))
         if _in_window(d, since, until):
@@ -185,6 +200,28 @@ def discover(fetcher, base, source, since=None, until=None, limit=300) -> list[C
         if k not in keys:
             keys.add(k)
             uniq.append(c)
-    uniq.sort(key=lambda c: c.published or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
     log.info("%s: %d kandidat URL", domain, len(uniq))
-    return uniq
+    return spread_by_day(uniq)
+
+
+def spread_by_day(cands: list[Candidate]) -> list[Candidate]:
+    """Urutkan bergiliran per hari (hari terbaru dulu, lalu satu artikel dari tiap hari, dst.) agar batas
+    --max-per-source tersebar di seluruh rentang tanggal, bukan habis di beberapa hari terakhir.
+    Kandidat tanpa tanggal ditaruh paling akhir."""
+    by = {}
+    for c in cands:
+        by.setdefault(c.published.date() if c.published else None, []).append(c)
+    days = sorted((d for d in by if d is not None), reverse=True)
+    for d in days:
+        by[d].sort(key=lambda c: c.published, reverse=True)
+    out, i = [], 0
+    while True:
+        added = False
+        for d in days:
+            if i < len(by[d]):
+                out.append(by[d][i])
+                added = True
+        if not added:
+            break
+        i += 1
+    return out + by.get(None, [])

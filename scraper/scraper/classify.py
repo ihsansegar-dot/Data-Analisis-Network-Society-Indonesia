@@ -30,6 +30,8 @@ class CategoryClassifier:
         rel = cfg.get("relevance", {})
         self.min_rel = int(rel.get("min_terms", 1))
         self.rel_terms = [(t, _pattern(t)) for t in rel.get("terms", [])]
+        # istilah lemah dihitung, tetapi tidak cukup sendirian (mis. "umat Katolik", "Kemenag", "PAN")
+        self.rel_weak = set(rel.get("weak_terms", []))
         self.min_score = float(cfg.get("min_score", 3))
         self.cats: dict[str, dict] = {}
         for key, c in cfg["categories"].items():
@@ -73,7 +75,7 @@ class CategoryClassifier:
         # skornya dipotong tepat di bawah ambang.
         labels = [k for k, v in sorted(scores.items(), key=lambda kv: -kv[1]) if v >= self.min_score]
         return Classification(
-            relevant=len(hits) >= self.min_rel,
+            relevant=len(hits) >= self.min_rel and any(h not in self.rel_weak for h in hits),
             relevance_hits=hits,
             scores=scores,
             labels=labels,
