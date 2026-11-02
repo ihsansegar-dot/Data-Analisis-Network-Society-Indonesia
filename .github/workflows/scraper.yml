@@ -1,0 +1,102 @@
+name: News Scraper
+
+on:
+  # Uji otomatis setiap ada perubahan kode scraper
+  push:
+    paths: ["scraper/**", ".github/workflows/scraper.yml"]
+  pull_request:
+    paths: ["scraper/**"]
+  # Jalankan scraping secara manual: tab Actions → News Scraper → Run workflow
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: "Domain dipisah koma (kosong = semua di sources.yaml)"
+        required: false
+        default: "republika.co.id,nu.or.id,detik.com"
+      group:
+        description: "Grup: nasional / daerah / islam (kosong = semua)"
+        required: false
+        default: ""
+      since:
+        description: "Mulai (YYYY-MM-DD, kosong = 7 hari terakhir)"
+        required: false
+        default: ""
+      until:
+        description: "Sampai (YYYY-MM-DD, kosong = hari ini)"
+        required: false
+        default: ""
+      max_per_source:
+        description: "Maks. artikel per media"
+        required: false
+        default: "30"
+      no_prefilter:
+        description: "Unduh semua kandidat (lebih lengkap, jauh lebih lambat)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults: { run: { working-directory: scraper } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: scraper/requirements.txt }
+      - run: pip install -r requirements.txt pytest scikit-learn
+      - run: python -m pytest -q tests
+
+  scrape:
+    if: github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    defaults: { run: { working-directory: scraper } }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12", cache: pip, cache-dependency-path: scraper/requirements.txt }
+      - run: pip install -r requirements.txt
+      - name: Pasang browser untuk fallback anti-bot (opsional)
+        continue-on-error: true
+        run: scrapling install
+      - name: Scrape
+        env:
+          SOURCES: ${{ inputs.sources }}
+          GROUP: ${{ inputs.group }}
+          SINCE: ${{ inputs.since }}
+          UNTIL: ${{ inputs.until }}
+          MAXN: ${{ inputs.max_per_source }}
+          NOPRE: ${{ inputs.no_prefilter }}
+        run: |
+          mkdir -p output
+          args=(--max-per-source "${MAXN:-30}" --out output)
+          [ -n "$SOURCES" ] && args+=(--sources "$SOURCES")
+          [ -n "$GROUP" ] && args+=(--group "$GROUP")
+          [ -n "$SINCE" ] && args+=(--since "$SINCE")
+          [ -n "$UNTIL" ] && args+=(--until "$UNTIL")
+          [ "$NOPRE" = "true" ] && args+=(--no-prefilter)
+          python run.py "${args[@]}" 2>&1 | grep -v "INFO: Fetched" | tee output/log.txt
+          {
+            echo "## Hasil scraping"
+            echo '```'
+            sed -n '/Ringkasan per media/,$p' output/log.txt
+            echo '```'
+            echo "### Kategori"
+            echo '```'
+            column -s, -t < output/kategori_ringkasan.csv | cut -c1-160 || cat output/kategori_ringkasan.csv
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+      # Repo ini publik: artefak bisa diunduh pengguna GitHub yang login.
+      # articles.jsonl (teks artikel) sengaja TIDAK diunggah demi hak cipta; hanya tabel ringkas.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hasil-scraping-${{ github.run_number }}
+          retention-days: 7
+          path: |
+            scraper/output/articles.csv
+            scraper/output/kategori_ringkasan.csv
+            scraper/output/sna_explorer.csv
+            scraper/output/log.txt

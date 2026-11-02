@@ -47,6 +47,20 @@ Opsi lain: `--delay` (jeda per domain, default 2,5 detik), `--workers` (domain p
 `--include-unlabeled`, `--out`, `-v`. Jalankan ulang dengan `--out` yang sama untuk melanjutkan; URL yang
 sudah diproses dicatat di `seen_urls.txt`.
 
+## Menjalankan di GitHub (tanpa instal apa pun)
+
+1. Buka repo di GitHub, lalu tab **Actions**, lalu **News Scraper**, lalu **Run workflow**.
+2. Isi domain, rentang tanggal, dan batas artikel, lalu klik **Run workflow**.
+3. Setelah selesai, buka run tersebut. Ringkasan per media dan per kategori tampil di halaman run, dan
+   tabelnya dapat diunduh dari **Artifacts** (`hasil-scraping-N`, disimpan 7 hari).
+
+Catatan:
+- Repo ini publik, jadi artefak dapat diunduh pengguna GitHub lain yang login. Karena itu `articles.jsonl` yang
+  berisi teks artikel tidak diunggah; yang diunggah hanya tabel dengan judul dan cuplikan.
+- Server GitHub berada di luar Indonesia dan memakai IP pusat data, sehingga sebagian media mungkin memblokir.
+  Bila sebuah media selalu `kandidat=0` atau `gagal` tinggi di GitHub, jalankan untuk media itu dari komputer lokal.
+- Setiap push ke `scraper/` otomatis menjalankan uji.
+
 ## Alur kerja
 
 1. **Penemuan URL**: baris `Sitemap:` di robots.txt, lalu lokasi sitemap umum (news sitemap diutamakan),
