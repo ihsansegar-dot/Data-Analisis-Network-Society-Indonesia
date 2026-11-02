@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SNA Explorer — Jaringan Retweet &amp; Reply</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<!--LIBS-->
+<style>
+:root{
+  --bg:#040d3a;--panel:#0a1650;--panel2:#11215f;--line:#20338a;--text:#eef1ff;--muted:#9dabd8;--dim:#6877ad;
+  --brand:#051e95;--brandRed:#fd0304;--accent:#2b4fe0;--accent2:#1d3bc4;--pos:#2ed3a0;--neu:#8d9bb8;--neg:#f87171;--warn:#f5b84a;--err:#f87171;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg) radial-gradient(ellipse at 85% -10%,rgba(11,47,192,.35),transparent 55%) no-repeat;background-attachment:fixed;color:var(--text);font:14px/1.45 Inter,system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}
+header{position:relative;display:flex;align-items:center;gap:16px;padding:16px 22px;margin-bottom:8px;color:#fff;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='420' height='120' viewBox='0 0 420 120'%3E%3Cg stroke='%23ffffff' stroke-opacity='.14' stroke-width='1.2' fill='none'%3E%3Cpath d='M20 90L80 40L150 70L210 25L280 60L340 30L400 75'/%3E%3Cpath d='M80 40L110 105L150 70M210 25L240 95L280 60M340 30L370 100'/%3E%3C/g%3E%3Cg fill='%23ffffff' fill-opacity='.18'%3E%3Ccircle cx='20' cy='90' r='4'/%3E%3Ccircle cx='80' cy='40' r='6'/%3E%3Ccircle cx='150' cy='70' r='4'/%3E%3Ccircle cx='210' cy='25' r='7'/%3E%3Ccircle cx='280' cy='60' r='5'/%3E%3Ccircle cx='340' cy='30' r='6'/%3E%3Ccircle cx='400' cy='75' r='4'/%3E%3Ccircle cx='110' cy='105' r='3'/%3E%3Ccircle cx='240' cy='95' r='3'/%3E%3Ccircle cx='370' cy='100' r='3'/%3E%3C/g%3E%3Ccircle cx='210' cy='25' r='3' fill='%23fd0304' fill-opacity='.7'/%3E%3C/svg%3E") right center/auto 100% no-repeat,radial-gradient(ellipse at 15% 0%,rgba(255,255,255,.12),transparent 55%),linear-gradient(115deg,#051e95 0%,#0b2fc0 52%,#06166b 100%);
+  box-shadow:0 6px 24px rgba(5,30,149,.35)}
+header::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;background:linear-gradient(90deg,#fd0304 0%,#fd0304 30%,rgba(253,3,4,.25) 70%,transparent 100%)}
+header svg{flex:none}
+header h1{font-size:21px;margin:0;font-weight:700;letter-spacing:-.01em;color:#fff}
+header h1 .acc{color:#ff5a5b}
+header p{margin:3px 0 0;color:#c9d4ff;font-size:13px}
+.hbadge{margin-left:auto;align-self:center;border:1px solid rgba(255,255,255,.35);color:#e4e9ff;border-radius:999px;padding:4px 12px;font-size:11.5px;letter-spacing:.02em;white-space:nowrap;background:rgba(255,255,255,.06)}
+@media (max-width:900px){.hbadge{display:none}}
+.brand{background:#fff;border-radius:12px;padding:6px 12px;display:flex;align-items:center;flex:none;box-shadow:0 4px 14px rgba(2,10,60,.35)}
+.brand img{display:block;height:52px;width:auto}
+@media (max-width:640px){.brand img{height:40px}.hdiv{display:none}header{flex-wrap:wrap;gap:10px}}
+.layout{display:grid;grid-template-columns:310px 1fr;gap:16px;padding:8px 22px 28px;align-items:start}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}}
+.card{background:linear-gradient(180deg,#0c1a5c 0%,var(--panel) 60%);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 0 rgba(255,255,255,.04) inset}
+.card h2{font-size:14px;margin:0 0 12px;font-weight:600;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h2 .n{display:inline-grid;place-items:center;width:20px;height:20px;border-radius:6px;background:rgba(253,3,4,.14);color:#ff6b6c;font-size:11px;font-weight:700;border:1px solid rgba(253,3,4,.35)}
+.side{display:flex;flex-direction:column;gap:16px}
+.drop{border:1.5px dashed var(--line);border-radius:10px;padding:14px;text-align:center;color:var(--muted);cursor:pointer;transition:.15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:rgba(60,98,240,.07);color:var(--text)}
+.drop strong{display:block;color:var(--text);margin-bottom:2px}
+.drop small{font-family:var(--mono);font-size:10.5px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--panel2);border-radius:8px;padding:8px 12px;cursor:pointer;font-weight:500;font-size:13px;transition:.15s}
+.btn:hover:not(:disabled){border-color:#3a56c0;background:#18297a}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover:not(:disabled){background:var(--accent2)}
+.btn.sm{padding:5px 9px;font-size:12px}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row .btn{flex:1}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);flex:1;min-width:0}
+input[type=date],input[type=number],input[type=search],select,textarea{background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 8px;min-width:0;color-scheme:dark}
+textarea{width:100%;resize:vertical;min-height:62px}
+.chk{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-top:8px}
+.report{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.6}
+.report b{color:var(--text);font-weight:500}
+.warn{color:var(--warn)}.err{color:var(--err)}
+code{font-family:var(--mono);font-size:11.5px;background:var(--panel2);padding:1px 5px;border-radius:4px;color:var(--text)}
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.plat{padding:12px 14px}
+.plat .ph{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.plat .ph h2{margin:0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--panel2);border-radius:9px;padding:8px 12px;cursor:pointer;font-weight:600;font-size:13px;transition:.15s}
+.chip:hover:not(:disabled){border-color:#3a56c0;background:#18297a}
+.chip .pd{width:10px;height:10px;border-radius:3px;flex:none}
+.chip .ct{font-family:var(--mono);font-size:11px;font-weight:500;color:var(--muted);background:rgba(0,0,0,.25);border-radius:5px;padding:1px 6px}
+.chip.on,.chip.on:hover:not(:disabled){background:var(--accent);border-color:var(--accent);color:#fff}
+.chip.on .ct{color:#dbe7ff;background:rgba(0,0,0,.2)}
+.chip:disabled{opacity:.38;cursor:not-allowed}
+.pnote{font-size:12px;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.pnote select{padding:4px 6px}
+.tabs{display:flex;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:4px;width:max-content;max-width:100%;flex-wrap:wrap}
+.tab{border:0;background:transparent;padding:7px 16px;border-radius:7px;cursor:pointer;color:var(--muted);font-weight:600}
+.tab.on{background:var(--accent);color:#fff}
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+.kpi .v{font-size:19px!important}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
+.kpi .l{font-size:11.5px;color:var(--muted)}
+.kpi .v{font-size:22px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:2px}
+.kpi .s{font-size:11px;color:var(--dim)}
+.graphcard{padding:0;overflow:hidden;position:relative}
+.gtools{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-bottom:1px solid var(--line)}
+.gtools .grow{flex:1}
+.gtools label{font-size:12px;color:var(--muted);display:flex;align-items:center;gap:6px}
+.gtools input[type=range]{width:100px;accent-color:var(--accent)}
+.gwrap{position:relative;height:600px;background:radial-gradient(ellipse at center,#0d1d6e 0%,#040d3a 75%)}
+@media (max-width:700px){.gwrap{height:460px}}
+canvas#cv{display:block;width:100%;height:100%;cursor:grab}
+.legend{position:absolute;left:12px;bottom:12px;background:rgba(4,13,58,.85);border:1px solid var(--line);border-radius:9px;padding:8px 10px;font-size:11.5px;max-height:45%;overflow:auto;backdrop-filter:blur(4px)}
+.legend div{display:flex;align-items:center;gap:7px;white-space:nowrap;padding:1px 0}
+.dot{width:9px;height:9px;border-radius:50%;flex:none;display:inline-block}
+.tip{position:absolute;pointer-events:none;background:rgba(4,13,58,.95);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font-size:12px;display:none;z-index:5;min-width:190px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.tip .h{font-weight:600;margin-bottom:4px;display:flex;align-items:center;gap:6px}
+.tip table,.detail table{border-collapse:collapse;width:100%}
+.tip td,.detail td{padding:1px 0;color:var(--muted)}
+.tip td+td,.detail td+td{text-align:right;color:var(--text);font-family:var(--mono);font-size:11.5px;padding-left:12px}
+.detail{position:absolute;right:12px;top:12px;width:260px;background:rgba(4,13,58,.93);border:1px solid var(--line);border-radius:10px;padding:12px;font-size:12.5px;display:none;backdrop-filter:blur(4px);max-height:calc(100% - 24px);overflow:auto}
+.detail .x{position:absolute;right:8px;top:6px;border:0;background:none;color:var(--muted);cursor:pointer;font-size:16px}
+.detail h3{margin:0 0 6px;font-size:15px;word-break:break-all}
+.detail .nb{margin-top:8px;color:var(--muted);font-size:11.5px}
+.detail .nb span{display:inline-block;background:var(--panel2);border-radius:5px;padding:1px 6px;margin:2px 3px 0 0;color:var(--text);cursor:pointer}
+.empty{position:absolute;inset:0;display:grid;place-items:center;color:var(--muted);text-align:center;padding:20px}
+.empty b{color:var(--text);font-size:16px;display:block;margin-bottom:4px}
+.busy{position:absolute;inset:0;display:none;place-items:center;background:rgba(4,13,58,.7);z-index:8;font-size:13px}
+.busy.on{display:grid}
+.gbusy{position:fixed;inset:0;display:none;place-items:center;background:rgba(4,13,58,.55);z-index:30;font-size:13px}
+.gbusy.on{display:grid}
+.spin{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:sp 1s linear infinite;margin:0 auto 8px}
+@keyframes sp{to{transform:rotate(360deg)}}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:1250px){.grid2{grid-template-columns:1fr}}
+table.top{width:100%;border-collapse:collapse;font-size:12.5px}
+table.top th{text-align:left;color:var(--dim);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.04em;padding:0 6px 6px;border-bottom:1px solid var(--line)}
+table.top th.r,table.top td.r{text-align:right}
+table.top td{padding:6px;border-bottom:1px solid rgba(32,51,138,.5);vertical-align:top}
+table.top tr:last-child td{border-bottom:0}
+table.top tr.cl{cursor:pointer}
+table.top tr.cl:hover td{background:rgba(60,98,240,.07)}
+table.top .rk{color:var(--dim);width:22px;font-variant-numeric:tabular-nums}
+table.top .u{max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+table.top .val{font-family:var(--mono);font-size:12px;white-space:nowrap}
+.bar{display:inline-block;height:5px;border-radius:3px;background:var(--accent);vertical-align:middle;margin-left:8px;opacity:.8}
+.sub{color:var(--dim);font-size:11px;font-weight:400}
+.sbar{display:flex;height:12px;border-radius:4px;overflow:hidden;background:var(--panel2);min-width:120px}
+.sbar i{display:block;height:100%}
+.dist .r{display:grid;grid-template-columns:70px 1fr 90px;align-items:center;gap:10px;margin:8px 0;font-size:13px}
+.dist .track{height:10px;border-radius:5px;background:var(--panel2);overflow:hidden}
+.dist .track i{display:block;height:100%;border-radius:5px}
+.dist .num{font-family:var(--mono);font-size:12px;text-align:right}
+.words{display:flex;flex-wrap:wrap;gap:6px}
+.words span{background:var(--panel2);border-radius:6px;padding:2px 8px;font-size:12px}
+.words span b{font-family:var(--mono);font-weight:500;font-size:11px;color:var(--muted);margin-left:4px}
+.cmt{border-left:3px solid var(--line);padding:6px 10px;margin:8px 0;font-size:12.5px;background:rgba(16,32,95,.5);border-radius:0 6px 6px 0}
+.cmt .m{color:var(--dim);font-size:11px;margin-bottom:2px}
+.lab{display:inline-block;border-radius:5px;padding:0 6px;font-size:11px;font-weight:600}
+.lab.pos{background:rgba(46,211,160,.15);color:var(--pos)}.lab.neg{background:rgba(248,113,113,.15);color:var(--neg)}.lab.neu{background:rgba(141,155,184,.15);color:var(--neu)}
+.tester .res{margin-top:8px;font-size:12.5px;color:var(--muted)}
+.exports{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#18297a;border:1px solid var(--line);border-radius:9px;padding:10px 16px;font-size:13px;display:none;z-index:40;max-width:90vw;box-shadow:0 10px 30px rgba(0,0,0,.4)}
+details.notes{font-size:12.5px;color:var(--muted)}
+details.notes summary{cursor:pointer;color:var(--text);font-weight:600;font-size:14px}
+details.notes li{margin:5px 0}
+svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
+.hide{display:none!important}
+.ents{display:flex;flex-direction:column;gap:8px}
+.ents label.f>span{display:flex;align-items:center;gap:6px;color:var(--text);font-weight:500}
+.ents textarea{min-height:44px;font-size:12.5px}
+.ntlist{display:flex;flex-direction:column;gap:2px;border:1px solid var(--line);border-radius:9px;padding:4px;background:var(--bg)}
+.ntrow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 6px;padding:3px 4px;border-radius:7px}
+.ntrow:hover{background:var(--panel2)}
+.ntrow textarea{grid-column:1/-1;font-size:12px;min-height:46px}
+.ntl{display:flex;align-items:center;gap:8px;cursor:pointer;font-size:13px;min-width:0}
+.ntl input{width:16px;height:16px;accent-color:var(--accent);margin:0}
+.ntl .ntn{flex:1}
+.ntl .ct{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--panel2);border-radius:5px;padding:0 6px}
+.ntrow.off .ntn,.ntrow.off svg{opacity:.4}
+.ntedit{padding:3px 8px;font-size:11px}
+.ltg{font-size:12.5px;font-weight:600;margin-bottom:5px}
+.vlabel{font-size:11px;font-weight:700;letter-spacing:.09em;color:var(--muted);margin:14px 0 7px}
+#vosCard h2+.vlabel{margin-top:2px}
+.vgrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vbtn{padding:9px 8px;border-radius:9px;border:1.5px solid var(--line);background:var(--panel2);color:var(--text);font-weight:600;font-size:12.5px;cursor:pointer;transition:.15s;line-height:1.2}
+.vbtn:hover{border-color:#3a56c0;background:#18297a}
+.vbtn.on{border-color:#fd0304;color:#ff6061;background:rgba(253,3,4,.12);box-shadow:0 0 0 3px rgba(253,3,4,.10)}
+.vsep{border-top:1px solid var(--line);margin:14px 0 2px}
+.prow{display:grid;grid-template-columns:1fr auto;align-items:center;gap:6px;padding:4px 4px;border-radius:7px}
+.prow:hover{background:var(--panel2)}
+.prow.off .ntn{opacity:.5}
+.ptag{font-size:10px;font-weight:600;color:#f8d48a;border:1px solid rgba(245,184,74,.5);border-radius:4px;padding:0 4px;margin-left:4px}
+.pdel{background:none;border:0;color:var(--dim);cursor:pointer;font-size:16px;line-height:1;padding:0 4px}
+.pdel:hover{color:var(--neg)}
+.padd{width:100%;margin-top:8px;background:rgba(60,98,240,.14);border-color:rgba(60,98,240,.4)}
+.qhelp{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--muted);background:transparent;color:var(--muted);font:italic 700 11px Georgia,serif;cursor:pointer;display:grid;place-items:center;padding:0}
+.qhelp:hover{border-color:var(--text);color:var(--text)}
+.qpop{background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:10px;font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.7}
+.qpop b{color:var(--text)}
+#qInput.bad{border-color:var(--neg)}
+.vadv{margin-top:12px;border-top:1px solid var(--line);padding-top:8px;font-size:12.5px}
+.vadv summary{cursor:pointer;color:var(--muted);font-weight:600}
+.gtypes{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 10px;border-bottom:1px solid var(--line);margin-top:-2px}
+.gtc{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--panel2);border-radius:14px;padding:3px 10px 3px 7px;font-size:12px;cursor:pointer;color:var(--text)}
+.gtc input{margin:0;accent-color:var(--accent)}
+.gtc.off{opacity:.45}
+.ebadge{display:inline-block;border:1px solid;border-radius:5px;padding:0 5px;font-size:10.5px;font-weight:600;margin-left:4px;vertical-align:middle}
+.phead{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.phead h2{margin:0;margin-right:auto}
+.seg{display:inline-flex;flex-wrap:wrap;gap:4px;background:var(--bg);border:1px solid var(--line);border-radius:9px;padding:3px}
+.segb{border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:7px;cursor:pointer;font-weight:600;font-size:12.5px;display:inline-flex;align-items:center;gap:6px}
+.segb:hover{color:var(--text)}
+.segb.on{background:var(--accent);color:#fff}
+.segb .ct{font-family:var(--mono);font-size:10.5px;background:rgba(0,0,0,.25);border-radius:5px;padding:0 5px}
+.seg.sm .segb{padding:5px 10px;font-size:12px}
+.hbar{display:inline-block;width:70px;height:6px;border-radius:3px;background:var(--panel2);margin-right:8px;vertical-align:middle;overflow:hidden}
+.hbar i{display:block;height:100%;background:var(--accent);border-radius:3px}
+.hbar.neg i{background:var(--neg)}
+.drow{display:grid;grid-template-columns:62px 1fr 92px 14px;align-items:center;gap:10px;width:100%;background:transparent;border:1px solid transparent;border-radius:8px;padding:8px 6px;cursor:pointer;text-align:left;font-size:13px}
+.drow:hover{background:var(--panel2);border-color:var(--line)}
+.drow .track{height:12px;border-radius:6px;background:var(--panel2);overflow:hidden}
+.drow .track i{display:block;height:100%;border-radius:6px}
+.drow .dn{text-align:right;font-family:var(--mono);font-size:12px}
+.drow .go{color:var(--dim)}
+.dbar{cursor:pointer}.dbar:hover rect:first-child{fill:rgba(60,98,240,.12)}
+.wcloud{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.cloudwrap{position:relative;background:radial-gradient(ellipse at center,rgba(43,79,224,.14),transparent 70%);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.cloudwrap svg{display:block;width:100%;height:auto}
+.cloudwrap text{cursor:pointer;font-family:Inter,system-ui,'Segoe UI Emoji','Apple Color Emoji','Noto Color Emoji',sans-serif;font-weight:700;transition:opacity .15s,filter .15s;opacity:0;animation:wcin .5s ease forwards}
+.cloudwrap text:hover{filter:brightness(1.35) drop-shadow(0 0 6px rgba(255,255,255,.35))}
+.cloudwrap.dim text{opacity:.25!important}.cloudwrap.dim text.hl{opacity:1!important}
+@keyframes wcin{from{opacity:0;transform-box:fill-box}to{opacity:1}}
+.cloudlegend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin-top:8px}
+.cloudtip{position:absolute;pointer-events:none;background:rgba(4,13,58,.95);border:1px solid var(--line);border-radius:7px;padding:5px 9px;font-size:12px;display:none;white-space:nowrap}
+.wc{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:4px 10px;cursor:pointer;color:var(--text);font-size:13px;line-height:1.3}
+.wc:hover{background:#18297a}
+.wc b{font-family:var(--mono);font-weight:500;font-size:.72em;color:var(--muted);margin-left:2px}
+.fchips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+.fchip{background:rgba(60,98,240,.15);border:1px solid rgba(60,98,240,.4);color:#cfe0ff;border-radius:14px;padding:3px 10px;font-size:12px;cursor:pointer}
+.fchip.clear{background:transparent;border-color:var(--line);color:var(--muted)}
+.xrow{border-left:3px solid var(--line);background:rgba(16,32,95,.45);border-radius:0 8px 8px 0;padding:9px 12px;margin:8px 0}
+.xrow .xt{font-size:13.5px;line-height:1.5;word-break:break-word}
+.xrow .xm{font-size:11.5px;color:var(--dim);margin-top:4px;display:flex;flex-wrap:wrap;align-items:center;gap:4px}
+.xrow .xb{margin-left:auto;display:inline-flex;gap:4px;flex-wrap:wrap}
+.lnk{background:none;border:0;padding:0;color:var(--muted);cursor:pointer;font-size:11.5px}
+.lnk:hover{color:var(--text);text-decoration:underline}
+.prog{height:8px;border-radius:4px;background:var(--panel2);overflow:hidden;margin-top:8px}
+.prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.banner{background:rgba(245,184,74,.12);border:1px solid rgba(245,184,74,.45);color:#f8d48a;border-radius:10px;padding:10px 14px;font-size:13px}
+.modal{position:fixed;inset:0;background:rgba(5,9,20,.78);z-index:35;display:none;place-items:center;padding:16px}
+.modal.on{display:grid}
+.mbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;width:min(720px,100%);max-height:92vh;overflow:auto}
+.mbox h3{margin:0 0 4px;font-size:16px}
+.ctext{background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:16px;font-size:15px;line-height:1.55;margin:14px 0;min-height:90px;white-space:pre-wrap;word-break:break-word}
+.codebtn{flex:1;padding:12px;font-size:14px;font-weight:600}
+.codebtn.pos{border-color:rgba(46,211,160,.5)}.codebtn.neu{border-color:rgba(141,155,184,.5)}.codebtn.neg{border-color:rgba(248,113,113,.5)}
+.codebtn kbd{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:6px}
+.pager{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:10px;font-size:12px;color:var(--muted)}
+.xtext{max-width:420px;white-space:normal;word-break:break-word}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.filters label.f{flex:0 1 auto}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><img src="data:image/webp;base64,UklGRl4mAABXRUJQVlA4IFImAACwfwCdASpuAYAAPj0YikOiIaEWidaQIAPEtROtCqHpWh+nn9u/tf7Jf2//u/8f5ba0/Zv6/+jf7f+13yw7Oum/oz98Lyz9O/2H9u/ef/K/Ln+2f6n/E+439D/8j3A/1D/1H+L/yv/m/xHxTeoz91PUJ/Sv71/yP9F+9vy4f57/l/5X3ff1L/cf9j+9/275A/57/cv+164HsY/5T/hewd+zP/t9nP/k//D/SfCB/VP9z+03wOfz/+//9X85/kA/83qAdTf05/pP4+eBH9p/sf7LfvD7C/i/zj9j/IP+3/9zntdJ/8v0R/k/16+6f3n9sf7L+4f3u/ff75+Ufnn6nPUC/F/5H/gf63+0f5Z+6bs29p/03oBewH0v/Qf4P9zf8V6ZX9Z6G/Xn/Ve4B/Jf6h/lfzg/vnz//uPD0/Cf7v2Af5d/Wf+B/ffyq+mb+V/4H+Q/zn7ce2j8+/vv/K/w3+d/9v0Efyb+of7v+7f5T/y/6T///+z7sfYJ+13/d9zr9fP/Uoeqkzbi/b0ErufaLhiTih87LhzXQFSYESKWkByjBLG8nrB3o6oxY3YzZRGAkmoxDBSc7+eRbaw/d/mFau4mAKved4scowQH9G/G5ejtgj1nP9Z2w0QFhyDcE0VNboWl1HOVcALfseBq/x0JXcyxNpQ0Zw8WQtB/v+IbrbkMsP6KvXV1vE0+mm6Ux0foar1kKhElWfaZNLwG6MGsuavfu7MXRqxN1HKuoZn3aeagUh2XQrW7S/og2PENtl26qwy4WqFdOhS40YhKD44f0Am3Hr0r0zB93m7t8NWYdYvWM3D8p1LlTZ+3lqfqOIpr+0llGsp51p6c7HlClbf3D82cSI7SoKvgIWsEGLGLbaqnBaFwrOXr63JyfXqtOwFTcrf4SVnPKtXC1pF+a/9FlsYkF1rpk8OlnuAegfRYF3/amy/G3j8TCqlYTfpjKGJV7QDZQVJpZsfrlAfpSv83K0lk0mY1kbO9IFXBmjNVWqrWKfdaMDBFZXgLF7b9tOh7nN/usEmTpCY+qRRobYqSZ3+DiAUav+b+XqW74YePkBJv613Qf8v0LNdwx03HkLE76EPkM464p3Uhn+hNYZ0gR9Gl8Gp1YASdvOItxmJKoX7yPTkAjv0YL6VNlVjTusKNPtwS8ua3mXaNfq46hDfnxwHCmgR3/2uwBzHvobMDrmGqMxPYi66H0sxp6NHMbxA46xmRiFtccrwsPKQg8HUWo2wosiIiDQDKADKHhUPtbTqixB47gRa1WuQSue7wl1ZEFAPRxZH+SuNh45LP/e3NXBZMqaf8iyTJG3xeMHmAksdDK7Al/JZU3eSX2Dy5eSsF2IHQHPuTuvCSuPeDheHiUE+oTV70UhT4AP7+tCjsD8qiPUPx5KIO+e0IJwXVpmeCBk2eyTUvKLuwDfmJuscIIsXZI+QsA0aFwAqTgbRS64h+sH7/Q2N1pPJF3Q59ykgWOXwX0ZjuDP6kKS3MBsDqKf4nu7ncOZCDbmGY2CaCYBlKccTfyrUWnJwvRKQfj/FROL5jKp5jSIOIep3vd4t2cdOt52xMXywauvngSCrebJdtXrjzKBeNEQyQwvRt36APP/n9Xo7Q2Nl3tiW4cHO+7aw3mgWqXLVsPbldEUE5hvzsp3FvHUDlMvlCzi+KnHwE84UkRnQ/K3LHRxxhyQAjB6HGTpw7GAARvedzK0JaIqD1T+iIChhkCa5vR5jNz9DW3KNoYGtCIasXrqngKWVRDHFCEr7H1kLANTRUzYejq1PYR9+jRyQ+ZCbIE3hqMFAAaUNxjucZJP15xIFAayWd1629Fxa0UUw11yoNnCbzXu5DwJq4pfzb19ZO9CJ+tVOhp6mii5ATSyt50Wl9++GeTFBNpJ+Iu7sAzd2MB0l3ZVmymsRdUOBCeBj4Onjbj1NyB6WDvYQgfb6SPbgXH4Spy/6WfTVq07PulBsDCdmN5o7SfyKd3SxiEhR7nvUp9N5Ym/fORkwVpcubMPnMekT5qViSO+BJ+CsTzUiQQAmxQHgs7trrdLxROUORrFDTE2mghF1P6POJ9+GMmS/MxpKrzdchrn76wFgKkwHjRy7wJ/veh5ODi/Szm76I8Nm8Z3BpHdbeiZOYkOZtbZyN+7deUhUnj0av/U8BkAb/enAixOgY3+2uA2o6ZC5ETnrirnlYdIP2WCpJZi60aE0waES2qR2x/NvJrLqF+D2kEx9lUle/tTxhaHq7pcdYmzGkjlSmm0qRNUnKi/Mo+a/swrUnjEpwUqXI5sJ0CrvPZUnAlSCl0n3gIiJHeS1EmOF1O5/QY6vQfCfQ/HtSqedqIboQlz8umT9w2vlTMOn8nBSmbEnH8dO+cdeYEGpUryfpUKSWvZx05LZ0I5Uhs0NH71nz2vk97YonY8iSojOS4n2D3ueGOXa8aZ5AAO59tAe+lgaPMzvBIA7yp2QqW2ZcuP+g3q51AqYpsDHSkuPznw31yeEMv1bJ5/8VUsl+6jmbaJKJMFeAi8Q9fZavTRbsebnyklOLbn3ItV9H4615KTiL9uiMVfwSaPnBADGat2L9K9JrNNeS9JzVoCKRmUJEXSCq0cBa/2aEYRcOmVgyEl1foUQ/8Q4z011aUnnnkNZlW9fn9LGuPBwILE0fmXfLPVWdFf6EBwEEGL1QHk4oCXhWfpfArLoOR7C4UeFpaPopz62sexRBE84a2zdJh7vVvj5JiuBg7st++iMFHUoyq7P2QIP5z6zmLLZUye1PH9OBzMp6oyduA5P17ftANmpe+zsIM0UvtfMM/JY3vZHlQ42dV/prI3NgMPCG7Up2rFSthS1gQqcnEQ4fpAbXwh/Ud/t7e/VWcUJPrlFXdAFtB9wrhMwryz/3nTqZyk3e0fywJHQ6j9ALuS/RAdJmR0Onh1B9l7kOhq0DkYFaUuDlfmTZk92yVqCOjkkhdoWcWKg4kZ/3Q4Fc8mcs7zRZ25U78ZpzBtIgYTQgyH/PCk3++gEdnUKKbQ034cgBk9pOkbKemNsMZ4qLN7ekwQvIeug36sO/ILGMPS/Gj7GhdDyEZYBWXWonJ/xQesVyQjctxHOs2sZXe2c6ShG6kLrvTFzJAvQU4SyypXe3GulqGcQDYiCdykdUz7Ef7rJeXaK5u6duBGWP8xJqZUdDx9AKzty3x3OTUFaYFlCRzYu4C2lhhMpnkHEb7140xj4EsZ/zDQV+fmfDV21tIxlXXCdGUj83RKjdTJsfQAom0+Kiq60yk/ouUl+xTJ6mweeY3Yi98wr0z9WmTgUDnQApqRhGRGeBS+1Nk3eD8nFHxroowO5kIJSMa/9Kx4quYDtuCv4uQZt8nmfOy/XTIHurgtbAJ3nEkllXVLe5REUHBd9Jx+Ux7Gs8HoUpvsgpy11WwBXmonf8nV53pcEoHee3AhOQrC7KfkyljNlO14nuZfh+Jq5Qewh5uzqXeL+j24LL/Ex3CTvBB9SPN5SNzj1PnMhHia8I693EUsKVnHrCNdbKPWL03EGwZFMEXQMBdWji3o6m7pA6vrjj8C/Ew5hHCVnMnYYLqYvHtmLYYS68QaRTq1gRipW0DU/OLaWeq9VEHK5LHh5byq1mzKuLAL98iJXAIpIK2XU6Y3nCtmkrR4XUaWYOqoYh/epOM6+tpLlKK8LoSEZri/M8lr49r5G7uPe6FPSHR+ZrVXv7BuiHMfabY5i/yq/6r/MvZtxizArWjiC1iL/2itqjeFt7OVEJnHCDX/HxV4Fowqbj5ESBa72ljSGifiuZW9sh2IFbJnJKimSUO1OKzdClhmTdd0MgRGGOwjAybOWqAoI5Ux5UpGKQA78UTy8JK2PsYzPk7rPE6TxS3z1YbcZdT+/tnvhvaf9GvWS35lF5F7zAguBpMRq73L63nPzQnzMPOj+Y5k2hSIly+wkJeYuQPniqeVvmZwBNq3ex5vDvtdJRnzJh3yROMBfQbsrwFg1UjIqWB18/FPTmUoV1r9PCzLRYh3xKLV/Ee5xGunF82+2UVPHuaOShEEJLrM0vYIo+4/05of8efJwdovyKgLbK8VDMcQKCUj3KVJJj72DHz6xPT5C/4nZAlzFLK4vX5GQK2YPz5NjEN5O+GgEPtWsI50+B/lKTB4zTUpc4CbhTDczaeelZOpJiBhPJPEpGG+rHhOPupvx7xuJwQ27k4tYjl/B84qiS5zPUwU1iEg8VS3yKcOVIpENUb0n4x/EijBh5/fOI2uA6DTOGoGrndLdcOvBpWBNp6QDMajyOzfoXeYmy93BP5Psmd8Q1Y3FIrzlczKjfipDpbtEb7PESByfgka4M3UngRMTJVNxOnlU9Wn788re9cQR5LF7R+mUTJvMQ6gRgH+JFSfEoA753ONEpPTSt6L/BesnFqZEy1IhGMx00FHtU8de7cYoB+ihERhSQvIrpw2OC6/TalYRVHarFQB1gAgH07k7DT6GEhbQov64RC7E9MPP5RcPdg7e3EPXsPyX1YmQy/56L4MVpGF/98KUmYFNBok+P54vfLuxLfzthf/Idv6dEk47Yg1iof2HbkbpDF1EFvS5/xgzcbUAgg6WpIYogsTINPDAFSt4I3ukbCzW06BRDjq4jgLRXrS49h+fc987oLCnGJyfjSOye+anyld80NdCFdBEWUtAY+Zn0gJlOiuCN8ijSYP3rGebU5OkCkqc9ZQQv8Jy6vG8u0bSsAOLKPmeEBDQ5+tit/PtCaEa+2rAddmMsBW3135sOJ5y4Rt0UYBgJ0/zbziB84xXN3kA6rqq1EJ0r7jVLkD/e5BCJPacPhEDp8xB1DcUIifJ9VQJUjIOi9UBNgvS3n/ZeV9DM/gpf8UT6smsMuxjYJbzK4VLlWKp+06K4MOdvxwndc1EWuJmDc0+ahTtfqftBEyAFM4dDlYBETduauXazYLltZO7i8JAAlrdghsUVxVWYuB8Yk1nQ+cUVELQRzDyLE8JYs2/9Dk8XKDT9+I70/9Vj9clDNj28NjpYaL8XlarsRvIo+Tqixe7kciR324S0HpSdI23VmNutDko5ETl5oCU3dmI84SFdNED2T8GmnGAvc7j8Cd4fINtb8aAgzzSTiNEm6KlZqS8s9QrP+zOSd7j0sXSIvkVDf4WjaIa69gXI7raazeLJVb9SgM05UicX+EZRrfp1s5yj45Ek1qHMHdcyWoGr+UVK6o6B03MblnIi5jE/l7xds7JCYsYxRiNBzu9uVYN5S+reZz1Y9sv2HpiyIxgFP34x+Y7XCdpTT+iI6o/iLdhPJTKNjJj/BxFa6H31QIW4tkA34RwIdEFd8bM6hcFktLmrMgdtaO72YNESBo3jrfqGS+b18/Gp4mEo3PzkI6emN6KK+kaaohjMbZSgCSxmpayVQq7obfAW4fwSPbVSVyyPhoJwNgd1dU8JWxZhPNUpnWwgQhBqZDi0vYsJFhLngA4gdvNMtfrmsMRVScN0u3BKKqSzt6M+Y/cg/LA2+3RGwYV/4AQHdzaBxCdB/tzWwNzIgN+6c0dYbksysfTkto1N9hBrbhEVCH3LLg/Eh9Rg6QOS7iqjy7p4Gzh/QHfafLotYTIURQ+rf/BDgkKVQFeD4se3Nl4s9m9q5QZYAJNKdsnhQMx5xlABdDkBkxvZ1Hi4E9k3ufAHoktjp9K1ZdEokxosnKt/A0rFxiKYCCctJupSIhHklVIbtnDjVX1g1txkrBoy83y1W+dWb9y1c1XGnsFEjTrPt+toZw8jNZ5zfBP/zA4SWuPyos9KsIvtWCCN0hDwXO8h1BmaIcGeBsEW83SolkrRw1ACJMFUrSVPI9UcH73BQwYPaRUXiag+a6f3wmn/w2JSTMcOhPtyEglYrqZ1FOALHT5BzZk/3cP4RTEdJGh7os7PCiteDiOw7CkYMFaMn8YaYdPZ+J5di1jn0B4+ekBwCzzHkCHmEoBfnDQTzj0JMcQ+0XUyqCSJx3isd1VuRKFoczcsIg6YSBVxTiU3urhiOFCv7ql9v/dY1X6EdwfR1gNKSuJgdd8Au+V+S7W9B+42DwSzmlDufdFhyPz/wOt9cuBFvg63pSKyMwsp6xXznfz8m3uIgzWL3WKc/rnD3ektyOIHOo5bkYvzHMJ5p8H53+ooXxtkK31mRJK9kyIDHRC1LDsICkifn4qIQlfATqhuoScBJRdZ+WFfBikDeQ3dc/aq46CQxhlaU0YxvPQs5o31j8kCitkl2v+63WPJ9qK8ix066lMsrL6bYf7QjRYgL2ukKSFn+Xzqo6YRDNe9U+w+rFtni3Ztfzj8ZfOFCnxUjy+dSQsP2tyDEAGZBRW5ZnNrXN549bLgXNhQUqNH5qIEtNbqgmNAuAIuXmcGvBtQGOtH/gK4btMz3DLwZ9eXBH/2km9rgkGiJbqe5YkrH8ezAZgEFWGuHFTVSts0BFM7YsGaB9RigabRLbhf++LvXmM3kp1GYj25Z88bBmWJ247GnzYCv4+AGHBb0v0LsQAGM65yonVxOumkpz1pklFhx6xgrQmubimihyMedMCX0ZTNE/05pRHj4O/8IfqNcEZ1Ea7+QIEUGIiaVod3er5u8fYXatAq0Ps/1kPv9np+/9Krj4tfd/A3r0YxTuxmJhgtfkzYEkHgDwP61nRHeZEN+TLv7pLuFBJhtcxO7y1vf0N4geARAjxZQrAPKymyWCh1S+oHGaRr1wqaLEAW/AIy3zs6IuL0m4gEQzME8GDbGz2eV1Tqg0ciqwYD/iH//WErUQfpqCK7qbCUPfnfKrLDLjf/k97bM9qC2LFmCsothygTrykIWDxbPldG8T4nraw01bFJ5MyLuJUsGXFZfiYwIsW5/rYvke5Rqrev4/O6HJycFAgYh3VQZJjfxxDxRYNk3tt9u6fk7Mcev32b+9V2lJlzQPr2ojHv0IN/fmnT5/fbpCdKQCf9pNwXf/J7wd1zs9PuKVKSP/xLMTtTw6FNLc+e8EicUM2PRelK3tpQ4rMKZW/iCr+YDgYgs7MaGh+OdfMyhoP5y8ISDDjSUfCmh1+MuCAvqZO4677E9fYDGCrEFYRVBEya4x9FIZkImfP+cYhrZaGIKeSJ8v8037Dg0ZV6df1XRB3nBJH/jrqd0myHp5JISxBFBgPSUq8+RRFEcnco5sU2DY+be2mSgiu/AZnlvl0sncCa8QJ6sCvsstcnBb3rl3MbPa+eogxHSU2FPiFO03B4HP6u/ST5IvjXgiuw0qRD/uy3/Npf+PLcw0LwT//4theYkQBSWQ4F1/+DgXZIqAvJ8aI3UzEJBu7gVGmu0yCrKFRtY4xO7uzk8bDzfQXpRONG4/NbjiCLvDdGchXtL+n5wHjJmjmfv8FPPVd8uva1wyGuEB4c34e66YTzuPLyW2gALNlxq5dWYlPU1ey+sUZYLF0WaJ1o1vZYUkt74549sRiUWAaMCKArRU/Yx0AhHpPdP5wExNKhPz2IMfRH8OCP7TpgkrbYOl/KfwXOT3bdyuCd2eOxUp+CDCO78b7B2ZYYiqv5Ahd1VS2qrvHUEXPj7s1ij9u9XpnRqPtbYSXK0hn7WTiMAi0EExDR3tDGkSwh5XRStGqVrKoMBg9yoFxS0sRatT6kMHmnwgjm8LPvV7glyqhtAiR364RN6b52Y6MjAg5i8MyknhKFZ/0B3VYNPLO5QrsdSvV1/yGd0xlaneMBQxF0kYN4b4Nn5Bb6gjJI+dMOVXEcQ23CnlD7nj+HSB9MJUglckJ4wGzDlWb+nus6Q6solCZW1Ki6cy7UuUACjz25MLKbRuP+CtCCmdtCbuEci+dUaNy4yC8UfH43xIN+MuZZQL84PteQQ1zQRibZ/CJ97/rBZ6Rf4dWyhnIClsSRGmRtbCvLLAbdRGYhzGrjz5uroC01N0Xhnp7unvlWX2PUT6QYpZFwRDP0i4838JcsT0vPFxI4USEFcVoistIz7wXyALuv8m+09JS9JcISvQ1/WcKbmaFVs5nQsLDLjbVaDbSs1i9V6ebBG3hYpegKDtQKIexSFXEL7rR6PJGWeWCPxYl4ooTXU1IbqMBbPZ1WJV+nQMOU0mosfBNE4BbLfcYCnrKCajdAUzzjnnRzPsFJU+v1tCJRRSOlrQsEUncge2vKbg7cVNCGnaS47Pnc1z88/sKGkrCWu/FrZ21vHqiWhZF/izCRpDzTuUadzrvPmfjWLvZM8LYukoRxMCTp/dF3WhVr4XI9ZCegAgr31Ahwc7y8rE4TTP2VE+Dl/M3t0883MpSVVpavU6yewS+gF9AuaZITXdQ1kmuZs14T2YWsASOEJvJ9uuTtq7XTBV9Xi/gPMHPocEpEDEJBvYHYz1PRbVA5J8rLPts7Xc3ML1Ye8mvgC7cMvaWLqiBi1/6galmt+HAjWZjfeoZGHNK56Q4QCKhPwHwCp/PXDOFTrFdv20DUunrady1DtUdwtWeOKhOBGWiKLjrl8jse9bQAGQk40/9wF78otCu1gOvh5g/1d0QffCUyIABkG/VoRxBkT/YUnW7ZPSCpIQsKtMlliCoBJ1LYZ25OvT00DikBuhEJIYDjS/qZeXDCdhDt7Glae7M3Lf4UhFlMBXwoOEkvpFylcDAwLkeF22OZdprdVkykGyPrKaA7NKp1VUhzrPW2Xzl92JusCAaqZUxLa+GAAD0RBSXBieUDwyKDnjPsASTkSsO4rSvcGwP9s5XxYnZPJkT41kK1EQ237Z4rUbgItyclwwuDKfrbDBVbAOuBjay0zBbC+1zcSiuY7AAJNxvLCNvNTSneh9nPMzJybY7UqYaR/GvvW//LyziafV3H29yrHKjjaGWonjjALdM4p34+T+hypE83LaCelTYPngBSzG3uWDtPVE0jwrMD+j2KUZPx3sy3HEfkRWZcO0Mwog4clLwU7egfpD9acIEUH3CQNEsu7aV87mT6v0cjlNKkuyXwQXw01JHNA9L76UOj4N8cYRn/tjGg7BOcWe4YcsYHy/CUKbT588fxUzDZ22hFHHB+Or9jERIMK9FMBxW6rmrd9V1+PyTCSJ4D8MCq3/6MV9Qq3LB6u5/54aVrCjNMbKKQa+II/Z+F44zFp9W3802T6klu7LekQfeqY67B4LQ1ekFAOf3X1RnW0Egzm1U7Y3f6G5QeVvjqWTU+rEkhsa8iJzPkNr/rOex73YfPCCnhsw5eoex2OBLMhS0xbFAUNr6vJwZzJG7Ci4VjCDlNzGm9yVZXMHCUXvyrJD9chKP9EtRVPmj5grX1OeLpXu7rYXOJhB0QtUvSzyHYGdJfmR5ohtr9yo3Hp5+qYGXR9XzbBk9ejGoXAZkMWElK+MmHJbpzRqeEE9XHd7zsXPj0/AjI+228WxHs7zEq2qGG1jsioP7vDp0O7YGCulWq0KuIs+TNOh6/K5y43uy3duYnHLd8Kk1SZDh5gvrg4Ia4r5FCuQaoQMgMY1be5H1iEnIZZzXxzDlnuMHgxUoFMwQQ/6fBOaYaiOS9HjlFEPVFTlHwu6/XNc/WJ5YVWoXNyBrM0dD4X1u2P8gURczCtGyDCdcm5AEmR94l4KTzZvYUNtPJH+D3nr57zJNXveiEmxFGAZ/MNQgfzNIakFNI2S5U1OsmCRUZMHbZ+N4Anlkc4tmSPI/5C8/eMRdbWYFKWNT8sgOBwC/qUnWyTy7HtFF2/0mvUKii8v0Laq+fY9WbvPtnMnv9LtS7gF0YZ9tqBkchffyfapeUS33JkqHeL9oyUQMs94H9rKloUOu3yyg7BpyHHGW/6JoddtKlbLkbCjcexTp8j1Gg9CdLgDtawQNho+uRa0+PYGCX5Fi/Y/nHhfDcfWP/8j2X3lKPYt1EPyk78SO68gxvQFyZChOFuOJ+4XE+t1J+OThY6E/+Q9cdMVnUVbqxUWrSS66pvR8tOgfh+kQP6Mv2qqKvHo2jP6oylbjwmWm4uW/YdksrbOzmAJdntnvrozewOtIBUdPtoKFpe3WRLRR0S/Gpky3pIiZyYGMroRCmpbOqwPGq+14Fu1mRvD+6HivMRPLJ5OGEuFjnf1mbxJiynoKk7/kETv43AAuq1zqvOEH1y9JBVrHigS2OaOx0ICjfEogxKjRZZ5eELeq3hzXzLvavw0U5RvD0jrR0KnWmgqXz+GcKRNqiQUvAtCwj5inms/PjUOg34evP1u80BFkgqPhrgdU3JHY4ZAQvzdE1D2fQsfRjgeP666cC7WMnYkIwWsM4erEnNqnUPIAMA1+Iy1Xu08NPKjm/jPq4akwqpmnZGQ1BYzz1N281ZB85y6GQ6V6s/skhwsdAEBnraJq7oXYG1yQHWZ3Hpqvty/TEc1aa3KdhSIZWtSJIkPOTdJE/46lz3ZujFmkAYIQL0mTqbf3t+nh+oBDqMgM2diWETgRy3LFcNX4+PMYoYip1MMaco7vE3p73XNntdNqNPhCmRf93BgAddtqJQBixHV7qBDHFWbuPe+wE6MmI+C0+TDaoAIFmsdzEwDLNejqwgXdAaPm08qDJSrxnShJpIY6x9C7Mhl6Tocw8CeSR7IPshddRpYVoWxfcVFyZKeZvhYEgrbuxv4VdEV/UM+08LcipUOG2L7P8YwrLbuutNetEDu3wlIb/iABqD5nTteNuHU6tP2DFFiPEMSrkHCYQcJktj39OXD8fS97g1bTpr73+WF5qWFTzXoG4sNDZNv5svvIcDx0M2XGzdQlwmc6j0dsLkh4cZZT0vPV8sS1HNbsSkGWJ8UaL777/TUQiqeJ4I5FrDoKI+44cMVhWcZ2+znCdW3GS0euZbad8JLqnHSFQ9x4Ptv56gy1yujfJwVYcvhw+SbHEjLUzA/rLqOgUovj40ji8PGrv1gWLSlORPHXK8djgbUlJYid0M84TwWbzknwz14vzzN1ScfnO1AxLqcQ3V1FduEv/BZJzcXsrnQzlESk0/dGaDr2jOA1NY7KiusLsg6ibAsSnZpQNhMdnaJqWYIjTujZYhuvRl0t/vbXwrPIK2b6j9cGC9mUlHpzuwFL2U+rmuwz/RF/A71gYItJ2QBrG8z8VZlivVJy/jQ/iq9lmI0nR+zfuwCKRmvEu6ZNSmCnJ4OUzhIKj7XuvnDrRfJnYX99SreeuS3gHKy/vjwmj3P57RybpctoiAYxKstohZ3N/411P8G19lvrGlQDZXQY+tPFUlg5h5abc0ok68felf3ZmKBV+qiEMnYSCGZ9zeZn6z4cW6VLuBeeB3KPauW0Vz1oxWUHOQtghlhFvHORRhtnIbVuXhB1zxV9pmW+JeAa/tClyP3tRYjFVubcG2rzLqe6mTl8wRVOEBgicYWtD5xUcGPfNjOslJyswmwSFZ3L1gNeim2e0EriNJeHjbLYynsUFo4/YK2+cu8m1Mkpkq42JIqg+oz48EQnN6oRwIY/macGQUliwSa/6novjPdQtEbYGFUSahVFCh+SWRnKGcQfuQ78wTkFIaCf7Rf7Si3T2kEVQNNKd3oc/G/HcEJdgMr8oLCzZid3dIqXb10acqtVHUG10JR9KxA/zopomJI/4UAGuZsUiyNwxvnq/3oz1KcO0Lg15PDZqHFgsXSxy7c8cJUmh9m/43vJ5H46DpjExTr8p7hUDYmVKtZgY2By+GjlVGZw+gP44gaRZi5864G495sZD38/6VizlX19qa3/T7JLr81icUi/J6lQ0IpN6O0De/yNce6NTe+2kspPp/JgHm+gsVxj3kqgNJb5IixJJTc9BOSo6O+H9zkZjeeanEdUWY/RPIQwMiWoJjdHHjt0kRm9CyCgnDsBHtfqvgTIIYHwNDvgKYFKgvHOPtG9bwgm746OvjhXlD1Psh8LPcTwiQgedke8CVs+zNR0gpgf0gA86bTMrEUAQfLPpSN4A2JBZyE5SlnXkHNHmy73zWAJAG3RUDE+7fGQqwe+HWzZj2+V60gfRbsQUV1b1PxPRZazTGrb+lx9PjnFjz+lrBO7hRiUFDi1Tf4ZHdMrfqB16lNyzvS/UwAnYkgDhVWtOu8lPNrSH/i0eDAKMdWaMapGotgQwHfHmWXy0X2l03zjruTEgPd6yRBXDn556kder9gmCwU0faLkPPVWoiH5M7LVgRzAIyunDyYSiCjXpGHT/zWb3Dt6LI6a1Ho3hhY07/K1lvKERiv54Pv/z6COrPywjs9n3EFCciJGU5DSto1OTn96qSJarr+zo0wBDTO0jRFb/LLaRdWTTiqsl8oT7VZgssifufh7t6/XpEU4p4TK1AD+MsXTQ1BMSs5xLtvACS8G+iC7dk0bQO0hYheVoaDEb06+SVacoJAbkGwYfOQw44uu7sFVyLaaBCSmAVhzH+k1HlUkadDGMKaDMFxXf0MDH/Kz9cQBy3WWCctgDMKBWqey31kUy77QLe0vlNE+fLH9N0oAAELqxIWWJ76TkPzy1D1qEvuIZzdRbkCPcJ5mWhEc/M1gErIp/CCAATQLg7HbLg/ynap/cReKIWR5WmStj50KjbmsvJYSVERb7qyd01GxnlhmE3c3ItOVi9XM2Oka2vZUiP5ivey5/Nfp97Vp39sqZfuUFFN0FVkCILtHRdEi9K9hzMTMCgRM/KJP6p+byDG4Bf+tSiCEuBpPqHlOC9e/sZQkGPLU1247E1eAci7rNrRfAQyZnYTqQroD2rmDEZxbMykQc4lmT4CBNiWt8PL5Tw7RsIFzU80ssdGFgs9y3TSuuq/s/rpC2hCTqWGTdM33FgwTdj1RKBu1L0Kj0OXLJgELGHnAJVSfCLY0k+RDWRGajeIAf5NLO61zd1ZLe6G0f4aDtoIS8JPRVy/MILIcb4sJFSCwrd0e57lzJ5YGn2ibbY8kF+MMsUdbguAYlmboNvhgV2lvUg89D1tGNPoADukoc/EW+fsmleRqu0gZ3oMkfZRMVNvWQylvf7ywvH5LPesOcm5HIAN3trp8MrtOEOTRjt1BIP9icbPI2Lmu5Uu5UY/avzGPsoySkoJdRMnJYIkxWexXT7sP64qPxme5rX0z5hOMjaHNbwmBplEKzVZfSPaoonK4dx1/WqvaDoYrka/9fWjsyCYKYGic1rjWyRbA0biKI1vgg99nrF8gUC1j9j8cL3f4AQ6/osvd2glI/QSPC+AVyjxLtn4fVBhvBn1i/JBpBbe6jqRJqoxJMImze1mfhqW0UNGkO9/rKdHFSScyHMaEY0r3MqSAAAAA=" alt="Network Society Indonesia" width="183" height="64"></div>
+  <div class="hdiv" aria-hidden="true"></div>
+  <div>
+    <h1>SNA <span class="acc">Explorer</span></h1>
+    <p>Analisis jaringan &amp; sentimen per platform · share/retweet · komentar/reply · mention · centrality · Louvain · GEXF · PDF</p>
+  </div>
+  <span class="hbadge">Network Society Indonesia</span>
+</header>
+
+<div class="layout">
+  <aside class="side">
+    <section class="card">
+      <h2><span class="n">1</span>Data</h2>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Unggah CSV">
+        <strong>Unggah atau seret file CSV</strong>
+        <small>author, text, type (share/comment/like/post), target_user, created_at, platform*, sentiment*</small>
+      </div>
+      <input type="file" id="file" accept=".csv,text/csv,.txt" class="hide">
+      <div class="row" style="margin-top:10px">
+        <button class="btn" id="demo">Muat data contoh</button>
+        <button class="btn" id="tpl">Template CSV</button>
+      </div>
+      <div class="report" id="report">Belum ada data. <code>type</code>: retweet/share/repost, reply/comment/komentar, like/suka/reaksi, tweet/post. *<code>platform</code> dan <code>sentiment</code> opsional.</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">2</span>Pengaturan jaringan</h2>
+      <div class="row">
+        <label class="f">Dari tanggal<input type="date" id="dFrom"></label>
+        <label class="f">Sampai<input type="date" id="dTo"></label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <label class="f">Seed Louvain<input type="number" id="seed" value="42" step="1"></label>
+        <label class="f">Resolusi<input type="number" id="res" value="1" step="0.1" min="0.1"></label>
+      </div>
+      <label class="chk"><input type="checkbox" id="self"> Sertakan self-loop</label>
+      <button class="btn primary" id="run" style="width:100%;margin-top:12px" disabled>Analisis ulang</button>
+    </section>
+
+    <section class="card" id="vosCard">
+      <h2><span class="n">3</span>VOSviewer</h2>
+      <div class="vlabel">GRAPH METHOD</div>
+      <div class="vgrid" id="vGraph"><button class="vbtn" data-v="force">Force-Directed</button><button class="vbtn" data-v="vos">VOSviewer</button></div>
+      <div class="vlabel">NORMALIZATION</div>
+      <div class="vgrid" id="vNorm"><button class="vbtn" data-v="association" title="s_ij = 2m·c_ij / (w_i·w_j) — default VOSviewer">Association</button><button class="vbtn" data-v="none" title="Bobot mentah (jumlah interaksi)">None</button></div>
+      <div class="vlabel">QUICK SETTINGS</div>
+      <div class="vgrid" id="vQuick"><button class="vbtn" data-v="account" title="Akun ↔ akun: Retweet, Reply, Mention">Account</button><button class="vbtn" data-v="acctopic" title="Akun → Term &amp; #Hashtag (jaringan Quote)">Account-Topic</button><button class="vbtn" data-v="actortopic" title="Person, Organisasi, News Site → Term &amp; #Hashtag">Actor-Topic</button><button class="vbtn" data-v="cooc" title="Entitas ↔ entitas dalam teks yang sama">Cooccurrence</button></div>
+      <div class="sub" id="vqDesc" style="margin-top:8px"></div>
+      <details class="vadv">
+        <summary>Lanjutan</summary>
+        <div class="row" style="margin-top:8px">
+          <label class="f">Ukuran node<select id="vSize"><option value="pr">PageRank</option><option value="tls">Total link strength</option><option value="links">Links</option></select></label>
+        </div>
+        <div class="row hide" id="vAR" style="margin-top:8px">
+          <label class="f">Attraction<input type="number" id="vAttr" value="2" step="1" min="-2" max="4"></label>
+          <label class="f">Repulsion<input type="number" id="vRep" value="1" step="1" min="-2" max="3"></label>
+        </div>
+        <div class="row" style="margin-top:10px"><button class="btn sm" id="vRelayout">Susun ulang layout</button><button class="btn sm primary" id="vExport">Ekspor VOSviewer</button></div>
+        <div class="sub" style="margin-top:6px">Normalisasi dipakai untuk klaster Louvain &amp; layout VOS; centrality tetap dari bobot mentah. Ekspor = zip berisi <code>map.txt</code>, <code>network.txt</code>, dan VOSviewer <code>.json</code> jaringan aktif.</div>
+      </details>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">4</span>Node Types</h2>
+      <div class="sub" style="margin:-4px 0 10px">Tentukan tipe node. Satu entri per baris atau dipisah koma; sinonim: <code>Label: alias1|alias2</code>. Untuk Account/News Site/Organisasi, alias yang sama dengan nama akun di data menandai akun itu.</div>
+      <div class="row" style="margin-bottom:8px"><button class="btn sm" id="ntAll">Semua</button><button class="btn sm" id="ntAcc">Hanya akun</button><button class="btn sm" id="ntEnt">Hanya entitas</button></div>
+      <div class="ntlist">
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="account" checked><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5.5" fill="#94a3b8"/></svg><span class="ntn">Account <span class="sub">· default</span></span><span class="ct" id="ntc_account">0</span></label>
+          <button class="btn sm ntedit" data-x="eAcc" title="Atur daftar Account">Atur</button>
+          <textarea id="eAcc" rows="2" class="hide" placeholder="akun yang dipaksa bertipe Account (opsional) — default: semua akun lain"></textarea>
+        </div>
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="person" checked><svg width="12" height="12" aria-hidden="true"><path d="M6 .2l1.5 3.9 4.2.2-3.3 2.6 1.1 4.1L6 8.7 2.5 11l1.1-4.1L.3 4.3l4.2-.2z" fill="#a3e635"/></svg><span class="ntn">Person <span class="sub">· pribadi</span></span><span class="ct" id="ntc_person">0</span></label>
+          <button class="btn sm ntedit" data-x="ePerson" title="Atur daftar Person">Atur</button>
+          <textarea id="ePerson" rows="2" class="hide" placeholder="Nama Tokoh: akun_pribadi|akun_kedua|nama lengkap&#10;satu akun per baris juga boleh"></textarea>
+        </div>
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="news" checked><svg width="12" height="12" aria-hidden="true"><rect x="1" y="1" width="10" height="10" fill="#fb923c"/></svg><span class="ntn">News Site</span><span class="ct" id="ntc_news">0</span></label>
+          <button class="btn sm ntedit" data-x="eNews" title="Atur daftar News Site">Atur</button>
+          <textarea id="eNews" rows="2" class="hide" placeholder="Kompas: kompascom|kompas.com&#10;Detik: detikcom|detik.com"></textarea>
+        </div>
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="org" checked><svg width="12" height="12" aria-hidden="true"><path d="M6 0L12 6 6 12 0 6z" fill="#60a5fa"/></svg><span class="ntn">Organisasi</span><span class="ct" id="ntc_org">0</span></label>
+          <button class="btn sm ntedit" data-x="eOrg" title="Atur daftar Organisasi">Atur</button>
+          <textarea id="eOrg" rows="2" class="hide" placeholder="KPU: kpu_ri|kpu|komisi pemilihan umum&#10;Bawaslu: bawaslu_ri|bawaslu"></textarea>
+        </div>
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="loc" checked><svg width="12" height="12" aria-hidden="true"><path d="M6 0L12 11H0z" fill="#34d399"/></svg><span class="ntn">Lokasi</span><span class="ct" id="ntc_loc">0</span></label>
+          <button class="btn sm ntedit" data-x="eLoc" title="Atur daftar Lokasi">Atur</button>
+          <textarea id="eLoc" rows="2" class="hide" placeholder="Jakarta: jakarta|jkt|dki&#10;Jawa Barat: jabar|jawa barat"></textarea>
+        </div>
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="place" checked><svg width="12" height="12" aria-hidden="true"><path d="M6 12L12 1H0z" fill="#fbbf24"/></svg><span class="ntn">Tempat / Place</span><span class="ct" id="ntc_place">0</span></label>
+          <button class="btn sm ntedit" data-x="ePlace" title="Atur daftar Tempat / Place">Atur</button>
+          <textarea id="ePlace" rows="2" class="hide" placeholder="Gedung DPR: gedung dpr|senayan&#10;Monas"></textarea>
+        </div>
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="term" checked><svg width="12" height="12" aria-hidden="true"><path d="M6 0L12 4.6 9.8 12H2.2L0 4.6z" fill="#c084fc"/></svg><span class="ntn">Term</span><span class="ct" id="ntc_term">0</span></label>
+          <button class="btn sm ntedit" data-x="eTerm" title="Atur daftar Term">Atur</button>
+          <textarea id="eTerm" rows="2" class="hide" placeholder="pemilu, bansos, korupsi"></textarea>
+        </div>
+        <div class="ntrow">
+          <label class="ntl"><input type="checkbox" class="ntv" data-t="hashtag" checked><svg width="12" height="12" aria-hidden="true"><path d="M6 0L11.2 3V9L6 12 .8 9V3z" fill="#f472b6"/></svg><span class="ntn">#Hashtag</span><span class="ct" id="ntc_hashtag">0</span></label>
+          <button class="btn sm ntedit" data-x="eTag" title="Atur daftar #Hashtag">Atur</button>
+          <textarea id="eTag" rows="2" class="hide" placeholder="#pemilu2029, #bansos"></textarea>
+        </div>
+      </div>
+      <div class="sub" style="margin-top:8px">Centang = tampilkan di graf &amp; tabel (langsung). “Atur” = isi daftar alias, lalu klik Terapkan.</div>
+      <div class="row" style="margin-top:8px"><button class="btn sm" id="eAutoTag">Isi hashtag teratas</button><button class="btn sm" id="eAutoTerm">Saran term</button></div>
+      <label class="f" style="margin-top:10px">Filter analisis<select id="eMode"><option value="none">Tidak memfilter — hanya hitung sebutan</option><option value="any">Hanya data yang menyebut salah satu entitas</option></select></label>
+      <div class="row" style="margin-top:10px"><button class="btn primary" id="eApply">Terapkan</button><button class="btn" id="eExport">Entitas CSV</button></div>
+      <div class="report" id="eInfo">Kolom CSV <code>account_type</code>/<code>node_type</code>, <code>organisasi</code>, <code>location</code>, <code>place</code>, <code>term</code>, <code>hashtags</code> (bila ada) dipakai otomatis.</div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">5</span>Edge / Link Types</h2>
+      <div class="sub" style="margin:-4px 0 10px">Centang untuk mengaktifkan jaringan; grafnya langsung terbuka. <span id="ltScope"></span></div>
+      <div class="ltg">Account – Account</div>
+      <div class="ntlist">
+        <div class="ntrow"><label class="ntl" title="Penulis → setiap @akun yang disebut di teks (selain target reply/retweet/quote baris itu)"><input type="checkbox" class="lfam" data-f="mention" checked><svg width="18" height="10" aria-hidden="true"><line x1="1" y1="5" x2="12" y2="5" stroke="#a78bfa" stroke-width="2.5"/><path d="M11 1.5L17 5 11 8.5z" fill="#a78bfa"/></svg><span class="ntn">Mention</span><span class="ct" id="ltc_mention">0</span></label></div>
+        <div class="ntrow"><label class="ntl" title="author → akun yang di-retweet (Share/Repost di TikTok, Instagram, Facebook, YouTube, Threads, Media Online)"><input type="checkbox" class="lfam" data-f="retweet" checked><svg width="18" height="10" aria-hidden="true"><line x1="1" y1="5" x2="12" y2="5" stroke="#4ade80" stroke-width="2.5"/><path d="M11 1.5L17 5 11 8.5z" fill="#4ade80"/></svg><span class="ntn">Retweet <span class="sub">/ Share</span></span><span class="ct" id="ltc_retweet">0</span></label></div>
+        <div class="ntrow"><label class="ntl" title="author → akun yang dibalas/dikomentari"><input type="checkbox" class="lfam" data-f="reply" checked><svg width="18" height="10" aria-hidden="true"><line x1="1" y1="5" x2="12" y2="5" stroke="#60a5fa" stroke-width="2.5"/><path d="M11 1.5L17 5 11 8.5z" fill="#60a5fa"/></svg><span class="ntn">Reply <span class="sub">/ Komentar</span></span><span class="ct" id="ltc_reply">0</span></label></div>
+      </div>
+      <div class="ltg" style="margin-top:10px">Entitas</div>
+      <div class="ntlist">
+        <div class="ntrow"><label class="ntl" title="Named Entity ↔ Named Entity dan Hashtag ↔ Hashtag yang muncul dalam teks yang sama"><input type="checkbox" class="lfam" data-f="cooc" checked><svg width="18" height="10" aria-hidden="true"><line x1="1" y1="5" x2="17" y2="5" stroke="#38bdf8" stroke-width="2.5"/></svg><span class="ntn">Co-occurrence</span><span class="ct" id="ltc_cooc">0</span></label></div>
+        <div class="ntrow"><label class="ntl" title="Account (type quote), Media → Named Entity, Akun → Term, Akun → Hashtag"><input type="checkbox" class="lfam" data-f="quote" checked><svg width="18" height="10" aria-hidden="true"><line x1="1" y1="5" x2="12" y2="5" stroke="#facc15" stroke-width="2.5"/><path d="M11 1.5L17 5 11 8.5z" fill="#facc15"/></svg><span class="ntn">Quote</span><span class="ct" id="ltc_quote">0</span></label></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">6</span>Sentimen</h2>
+      <div class="row">
+        <label class="f">Sumber label<select id="sSource"><option value="lexicon">Leksikon</option><option value="ai" disabled>Claude AI</option><option value="column" disabled>Label manual / kolom CSV</option></select></label>
+        <label class="f">Teks dianalisis<select id="sScope"><option value="comments">Komentar/reply/quote</option><option value="all">Semua teks</option></select></label>
+      </div>
+      <div class="report" id="lexInfo" style="margin-top:8px"></div>
+      <div class="row" style="margin-top:6px">
+        <button class="btn sm" id="lexUp">Unggah leksikon</button>
+        <button class="btn sm" id="lexReset">Leksikon bawaan</button>
+      </div>
+      <input type="file" id="lexFile" accept=".csv,.tsv,.txt" class="hide">
+      <div class="row" style="margin-top:10px;align-items:flex-end">
+        <label class="f">Minimal teks per aktor<input type="number" id="minN" value="3" min="1" step="1"></label>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px" id="aiBox">
+        <div style="font-weight:600;font-size:13px">Klasifikasi Claude AI <span class="sub">· menangkap sarkasme &amp; konteks</span></div>
+        <div class="row" style="margin-top:8px;align-items:flex-end">
+          <label class="f">Cakupan<select id="aiScope"><option value="active">Platform aktif</option><option value="all">Semua platform</option></select></label>
+          <button class="btn primary sm" id="aiRun" disabled style="flex:0 0 auto;padding:7px 10px">Klasifikasi</button>
+          <button class="btn sm hide" id="aiStop" style="flex:0 0 auto;padding:7px 10px">Berhenti</button>
+        </div>
+        <div class="prog hide" id="aiProg"><i></i></div>
+        <div class="report" id="aiInfo" style="margin-top:8px">Muat data untuk memulai. Semua komentar diproses tanpa batas (per batch 50, teks identik hanya sekali).</div>
+      </div>
+      <div style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px">
+        <div style="font-weight:600;font-size:13px">Validasi manual <span class="sub">· sampel acak → κ</span></div>
+        <div class="row" style="margin-top:8px;align-items:flex-end">
+          <label class="f">Ukuran sampel<input type="number" id="valN" value="200" min="20" step="10"></label>
+          <button class="btn sm" id="valStart" disabled style="flex:0 0 auto;padding:7px 10px">Mulai koding</button>
+        </div>
+        <div class="report" id="valInfo" style="margin-top:8px">Anda melabeli sampel acak komentar; aplikasi menghitung kesesuaian leksikon dan Claude AI terhadap label Anda.</div>
+      </div>
+      <div class="tester" style="margin-top:12px">
+        <label class="f">Uji kalimat<textarea id="tText" placeholder="Ketik komentar, mis. “programnya bagus tapi pelaksanaannya lambat”"></textarea></label>
+        <div class="res" id="tRes"></div>
+      </div>
+    </section>
+
+    <section class="card" id="projCard">
+      <div class="vlabel" style="margin-top:0">PROJECTS</div>
+      <div class="ntlist" id="projList"></div>
+      <button class="btn padd" id="projAdd">+ Add Projects</button>
+      <div class="sub" style="margin-top:6px">Setiap CSV yang diunggah menjadi proyek; semua proyek di daftar digabung dalam analisis.</div>
+      <div class="vsep"></div>
+      <div class="vlabel">SOURCES</div>
+      <select id="srcSel" style="width:100%" aria-label="Sumber"><option value="all">All Sources</option></select>
+      <div class="vsep"></div>
+      <div class="vlabel" style="display:flex;align-items:center;justify-content:space-between">FILTERS <button class="qhelp" id="qHelp" aria-label="Bantuan sintaks filter" title="Bantuan sintaks">i</button></div>
+      <div class="qpop hide" id="qPop">
+        <b>Sintaks filter teks</b>
+        <div><code>vaksin</code> — memuat kata “vaksin”</div>
+        <div><code>"kredit motor"</code> — frasa persis</div>
+        <div><code>a OR b</code> · <code>a | b</code> — salah satu</div>
+        <div><code>a b</code> · <code>a AND b</code> — keduanya</div>
+        <div><code>-a</code> · <code>NOT a</code> — tidak memuat</div>
+        <div><code>(a OR b) c</code> — pengelompokan</div>
+        <div><code>vaksin*</code> — awalan (vaksinasi, vaksinnya…)</div>
+        <div class="sub" style="margin-top:4px">Tidak peka huruf besar/kecil, per kata utuh; bisa juga <code>#hashtag</code> dan <code>@akun</code>. Tekan Enter untuk menerapkan. Analisis jaringan &amp; sentimen dihitung ulang hanya dari baris yang cocok.</div>
+      </div>
+      <input type="search" id="qInput" placeholder='e.g. "kredit motor" OR vaksin' style="width:100%" aria-label="Filter teks">
+      <div class="report" id="qInfo" style="margin-top:6px"></div>
+    </section>
+
+    <section class="card">
+      <h2><span class="n">7</span>Ekspor</h2>
+      <div class="exports">
+        <button class="btn primary" id="exGexf" disabled>Ekspor GEXF</button>
+        <button class="btn" id="cpGexf" disabled>Salin GEXF</button>
+        <button class="btn" id="exCsv" disabled>Metrik CSV</button>
+        <button class="btn" id="exSent" disabled>Sentimen CSV</button>
+      </div>
+      <div class="row" style="margin-top:10px;align-items:flex-end">
+        <label class="f">Laporan PDF<select id="pdfScope"><option value="active">Platform aktif</option><option value="all">Semua platform (lengkap)</option><option value="overview">Ringkasan perbandingan saja</option></select></label>
+        <button class="btn primary" id="exPdf" disabled style="flex:0 0 auto">Ekspor PDF</button>
+      </div>
+      <div class="report" id="exNote" style="margin-top:8px">Di tampilan platform, GEXF = jaringan aktif. Di “Semua Platform”, GEXF = zip berisi semua jaringan per platform.</div>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="banner hide" id="demoBanner"><b>DATA SINTETIS.</b> Data contoh dibangkitkan secara acak oleh aplikasi; perbedaan jaringan dan sentimen antar-platform sengaja dibuat untuk demonstrasi dan <b>bukan temuan</b>.</div>
+    <section class="card plat">
+      <div class="ph"><h2><span class="n">P</span>Platform</h2><span class="sub">Setiap platform dianalisis terpisah — akun tidak digabung lintas platform.</span></div>
+      <div class="chips" id="chips"></div>
+      <div class="pnote hide" id="pnote"></div>
+    </section>
+    <div class="banner hide" id="entBanner" style="background:rgba(60,98,240,.1);border-color:rgba(60,98,240,.4);color:#cfe0ff"></div>
+
+    <!-- WELCOME (no data) -->
+    <section class="card" id="welcome" style="text-align:center;padding:40px 20px">
+      <div class="spin" id="wSpin"></div>
+      <h2 style="justify-content:center;font-size:18px;margin-bottom:6px">Menyiapkan jaringan…</h2>
+      <p class="sub" style="font-size:13px;max-width:520px;margin:0 auto 16px">Graf SNA tampil setelah data dimuat. Data contoh dimuat otomatis; unggah CSV Anda untuk menganalisis data sendiri.</p>
+      <div class="row" style="justify-content:center;max-width:420px;margin:0 auto">
+        <button class="btn primary" id="wUpload">Unggah CSV</button>
+        <button class="btn" id="wDemo">Muat data contoh</button>
+      </div>
+    </section>
+
+    <!-- OVERVIEW -->
+    <div id="ovView" class="hide" style="display:flex;flex-direction:column;gap:16px">
+      <section class="card">
+        <h2>Perbandingan antar-platform <span class="sub" id="ovSub"></span></h2>
+        <div style="overflow-x:auto"><table class="top" id="ovTable"></table></div>
+      </section>
+      <section class="card">
+        <h2>Jaringan per platform <span class="sub">· klik graf untuk membuka platform · ukuran node = PageRank, warna = komunitas</span></h2>
+        <div class="tabs" id="ovNet" style="margin-bottom:12px"><button class="tab on" data-net="retweet">Share / Retweet</button><button class="tab" data-net="reply">Komentar / Reply</button><button class="tab" data-net="like">Like</button></div>
+        <div id="ovGraphs" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px"></div>
+      </section>
+      <section class="card hide" id="ovEnt">
+        <div class="phead"><h2>Entitas per platform <span class="sub">· jumlah sebutan · klik sel untuk membuka teksnya</span></h2><div class="seg sm" id="ovETabs"></div></div>
+        <div style="overflow-x:auto"><table class="top" id="ovETable"></table></div>
+      </section>
+      <section class="card">
+        <h2>Distribusi sentimen per platform <span class="sub" id="ovSentSub"></span></h2>
+        <div id="ovSent"></div>
+      </section>
+    </div>
+
+    <!-- PLATFORM -->
+    <div id="pView" style="display:flex;flex-direction:column;gap:16px">
+      <div class="topbar">
+        <div class="tabs" role="tablist">
+          <button class="tab on" data-net="retweet" role="tab" id="tabShare">Share</button>
+          <button class="tab" data-net="reply" role="tab" id="tabReply">Komentar</button>
+          <button class="tab" data-net="like" role="tab" id="tabLike">Like</button>
+          <button class="tab" data-net="mention" role="tab" id="tabMention">Mention</button>
+          <button class="tab" data-net="cooc" role="tab" id="tabCooc">Co-occurrence</button>
+          <button class="tab" data-net="quote" role="tab" id="tabQuote">Quote</button>
+        </div>
+        <span class="sub" id="netDesc"></span>
+      </div>
+      <div class="kpis" id="kpis"></div>
+      <section class="card graphcard">
+        <div class="gtools">
+          <input type="search" id="search" placeholder="Cari akun…" list="ulist" style="width:160px">
+          <datalist id="ulist"></datalist>
+          <label>Warna <select id="cMode"><option value="community">Komunitas</option><option value="type">Tipe node</option><option value="sout">Sentimen ditulis</option><option value="sin">Sentimen diterima</option></select></label>
+          <label>Label <input type="range" id="nLabel" min="0" max="60" value="15"><span id="nLabelV">15</span></label>
+          <label>Node <input type="range" id="nShow" min="10" max="1500" value="1500"><span id="nShowV">–</span></label>
+          <span class="grow"></span>
+          <button class="btn sm" id="pause">Jeda layout</button>
+          <button class="btn sm" id="fit">Pusatkan</button>
+        </div>
+        <div class="gtypes hide" id="gTypes"></div>
+        <div class="gtypes hide" id="gLinks"></div>
+        <div class="gwrap" id="gwrap">
+          <canvas id="cv"></canvas>
+          <div class="empty" id="empty"><div><b>Belum ada jaringan</b>Unggah CSV atau klik “Muat data contoh”.</div></div>
+          <div class="legend hide" id="legend"></div>
+          <div class="tip" id="tip"></div>
+          <div class="detail" id="detail"></div>
+          <div class="busy" id="busy"><div style="text-align:center"><div class="spin"></div><span id="busyMsg">Menghitung…</span></div></div>
+        </div>
+      </section>
+      <section class="card" id="actorCard">
+        <div class="phead"><h2>Aktor kunci</h2><div class="seg" id="mTabs"></div><select id="mTop" aria-label="Jumlah aktor"><option value="10">Top 10</option><option value="25">Top 25</option><option value="50">Top 50</option></select></div>
+        <div class="seg sm hide" id="mTypes" style="margin-bottom:8px"></div>
+        <div class="report" id="mDesc" style="margin:0 0 10px"></div>
+        <div style="overflow-x:auto"><table class="top" id="mTable"></table></div>
+      </section>
+
+      <section class="card hide" id="entCard">
+        <div class="phead"><h2>Node non-akun &amp; sebutan <span class="sub" id="eSub"></span></h2></div>
+        <div class="seg" id="eTabs" style="margin-bottom:10px"></div>
+        <div class="sub" style="margin-bottom:6px">Klik baris untuk membaca komentarnya · “Fokus” menghitung ulang seluruh analisis hanya untuk data yang menyebut entitas itu.</div>
+        <div style="overflow-x:auto"><table class="top" id="eTable"></table></div>
+        <button class="btn sm hide" id="eMore" style="margin-top:8px"></button>
+      </section>
+
+      <section class="card" id="sentCard">
+        <div class="phead"><h2>Sentimen <span class="sub" id="sentSub"></span></h2></div>
+        <div class="seg" id="sTabs" style="margin-bottom:14px"></div>
+        <div id="sp-sum">
+          <div class="grid2">
+            <div><div id="sentDist"></div><div class="report" id="sentMeta" style="margin-top:8px"></div></div>
+            <div><div class="sub" style="margin-bottom:4px">Tren harian</div><div id="sentTrend"></div></div>
+          </div>
+          <div id="agree"></div>
+        </div>
+        <div id="sp-words" class="hide"></div>
+        <div id="sp-actors" class="hide"></div>
+        <div id="sp-ex" class="hide"></div>
+        <div id="sp-all" class="hide">
+          <div class="filters">
+            <input type="search" id="xQ" placeholder="Cari kata atau @akun…" style="flex:1;min-width:180px">
+            <div class="seg sm" id="xLabs"></div>
+            <select id="xSort" aria-label="Urutkan"><option value="time">Terbaru</option><option value="neg">Paling negatif</option><option value="pos">Paling positif</option></select>
+            <select id="xF" aria-label="Filter lain"><option value="">Semua teks</option><option value="dis">Leksikon ≠ AI</option><option value="sar">Sarkasme (AI)</option><option value="man">Berlabel manual</option></select>
+          </div>
+          <div id="xChips" class="fchips"></div>
+          <div id="xList"></div>
+          <div class="pager"><span id="xInfo"></span><button class="btn sm" id="xPrev">‹</button><button class="btn sm" id="xNext">›</button></div>
+        </div>
+      </section>
+    </div>
+
+    <section class="card">
+      <details class="notes">
+        <summary>Catatan metode</summary>
+        <ul>
+          <li><b>Per platform.</b> Baris dikelompokkan menurut kolom <code>platform</code> (juga dikenali: <code>media</code>, <code>source</code>, <code>sumber</code>, <code>channel</code>). Setiap platform punya jaringan sendiri; akun dengan nama sama di dua platform tetap dua node berbeda. Nilai dikenali: TikTok, Instagram/IG, X/Twitter, YouTube/YT, Threads, Facebook/FB, Media Online/berita/portal/website; selain itu “Lainnya”. Tanpa kolom platform, seluruh file ditetapkan ke satu platform pilihan Anda.</li>
+          <li><b>Jaringan share per platform.</b> <code>type</code> retweet/share/repost/reshare/bagikan membentuk jaringan amplifikasi platform tersebut, diberi nama sesuai istilahnya (Retweet di X, Repost di Threads, Share/Repost di TikTok &amp; Instagram, Share di Facebook, YouTube, Media Online). Jaringan share antar-platform tidak pernah digabung karena maknanya berbeda (mis. share Facebook ≠ retweet X).</li>
+          <li><b>Jaringan like.</b> <code>type</code> like/likes/suka/love/reaction/reaksi/favorite membentuk jaringan like per platform (TikTok, Instagram, X, YouTube, Threads, Facebook), edge <code>penyuka → pemilik postingan</code>; bobot = jumlah like antar pasangan akun. Tidak dibuat untuk Media Online. Like hanya bisa dianalisis bila data mencatat <i>siapa</i> yang menyukai; banyak API/scraper hanya memberi jumlah like per postingan, dan data seperti itu tidak membentuk jaringan.</li>
+          <li><b>Jaringan komentar.</b> <code>type</code> reply/comment/komentar/balasan, edge <code>author → target_user</code>. Di Instagram/TikTok/YouTube biasanya target = pemilik konten.</li>
+          <li><b>Bobot &amp; metrik.</b> Bobot edge = jumlah interaksi. In/out-degree berbobot (angka kecil = akun unik). Betweenness: Brandes, berarah, tanpa bobot, dinormalisasi 1/((n−1)(n−2)); diaproksimasi dari 1.000 sumber bila node &gt; 4.000. PageRank berbobot α = 0,85. Semua setara NetworkX.</li>
+          <li><b>Louvain.</b> Pada proyeksi tak berarah (u→v + v→u); bergantung seed; komunitas dinomori menurut ukuran.</li>
+          <li><b>Sentimen — leksikon.</b> Leksikon bawaan ±320 kata Indonesia/Inggris (termasuk slang dan umpatan yang lazim di media sosial politik) dengan bobot −3…+3, penanganan negasi (tidak, gak, bukan, kurang…: polaritas dibalik ×0,75), penguat (sangat, banget…), kontras (tapi/namun: klausa sesudahnya ×1,5, sebelumnya ×0,5), emoji umum, normalisasi huruf berulang dan singkatan. Skor = Σ bobot, dinormalisasi <code>s/√(s²+15)</code> ke −1…1; positif ≥ 0,05, negatif ≤ −0,05. Leksikon ini disusun untuk alat ini dan <b>belum divalidasi</b>; ia tidak menangkap sarkasme, konteks, atau kata baru.</li>
+          <li><b>Leksikon sendiri.</b> Unggah file dua kolom <code>kata,bobot</code> (CSV/TSV), mis. leksikon InSet; leksikon unggahan menggantikan leksikon bawaan (aturan negasi/penguat tetap dipakai, bigram bawaan tidak).</li>
+          <li><b>VOSviewer.</b> <i>Normalization</i>: <b>Association strength</b> s<sub>ij</sub> = 2m·c<sub>ij</sub>/(w<sub>i</sub>w<sub>j</sub>) dengan c<sub>ij</sub> = bobot link tak berarah (dua arah dijumlahkan), w<sub>i</sub> = total bobot link node i, m = ½Σw<sub>i</sub> (Van Eck &amp; Waltman, 2009; default VOSviewer), atau <b>None</b> (bobot mentah). Normalisasi dipakai untuk klaster Louvain dan layout VOS; centrality tetap dari bobot mentah. <i>Layout VOS</i>: meminimalkan Σ s<sub>ij</sub>d<sub>ij</sub><sup>a</sup>/a − Σ d<sub>ij</sub><sup>r</sup>/r (attraction a = 2, repulsion r = 1 sebagai default VOSviewer) dengan penurunan gradien; untuk &gt;700 node repulsi diaproksimasi dengan sampel, dan gaya tarik kecil ke pusat ditambahkan agar komponen terpisah tidak menjauh tanpa batas — hasilnya mirip tetapi tidak identik dengan VOSviewer. Klaster aplikasi memakai Louvain (bukan algoritma klaster VOS/Leiden). <i>Ekspor</i>: map file &amp; network file (tab-separated) serta VOSviewer JSON; strength = bobot mentah sehingga VOSviewer dapat menerapkan normalisasinya sendiri.</li>
+          <li><b>Account–Account.</b> <i>Mention</i>: edge penulis → setiap @akun yang disebut dalam teks (tweet, reply, komentar, quote), tidak termasuk akun yang sudah menjadi target reply/retweet/quote pada baris yang sama dan tidak termasuk penulis sendiri; satu akun dihitung sekali per teks. <i>Retweet</i> (Share/Repost di platform lain) dan <i>Reply</i> (Komentar) adalah jaringan dari kolom <code>type</code> + <code>target_user</code>. Mencentang/menghapus centang menampilkan/menyembunyikan jaringan; ekspor hanya menyertakan jaringan yang aktif.</li>
+          <li><b>Edge / Link Types.</b> <i>Co-occurrence</i> (tak berarah): Named Entity ↔ Named Entity (Person, Organisasi, News Site, Lokasi, Tempat) dan Hashtag ↔ Hashtag yang muncul dalam teks yang sama; bobot = jumlah teks. Disimpan sebagai dua edge berlawanan arah sehingga PageRank, betweenness ternormalisasi, densitas, dan modularitas setara dengan graf tak berarah; resiprositas tidak bermakna. <i>Quote</i> (berarah): Account (baris <code>type = quote</code>, target dari <code>target_user</code> atau “QT/RT @akun” di teks), Media → Named Entity (akun News Site menyebut entitas), Akun → Term, Akun → Hashtag; bobot = jumlah kutipan/sebutan. Atribut <code>link_type</code> ada di GEXF. Catatan: co-occurrence menunjukkan kemunculan bersama, bukan hubungan semantik antar-entitas.</li>
+          <li><b>Node Types.</b> Akun diberi tipe <i>Person</i>, <i>News Site</i>, atau <i>Organisasi</i> bila namanya cocok dengan alias di daftar (atau dari kolom <code>account_type</code>/<code>node_type</code>); daftar <i>Account</i> memaksa tipe Account; akun lain otomatis Account. <i>Person</i> = akun pribadi/individu (dari daftar Person atau kolom tipe akun bernilai pribadi/individu/tokoh/influencer). Bentuk node menandai tipe (lingkaran Account, bintang Person, kotak News Site, belah ketupat Organisasi, segitiga Lokasi, segitiga terbalik Tempat, segi lima Term, segi enam #Hashtag). Jaringan <b>Multi-tipe</b> menghubungkan akun ke entitas yang disebutnya (bobot = jumlah sebutan); sebutan News Site/Organisasi diarahkan ke akun resminya bila akun itu ada di data. Ini jaringan dua-mode (akun–entitas): centrality di dalamnya membandingkan tipe node yang berbeda, jadi tafsirkan per tipe (gunakan filter tipe di tabel Aktor kunci).</li>
+          <li><b>Entitas &amp; kata kunci.</b> Lima kategori (Organisasi, Lokasi, Tempat/Place, Term, #Hashtag) dicocokkan dengan teks per kata utuh, tidak peka huruf besar/kecil, termasuk sinonim (<code>Label: a|b</code>). Bila CSV memiliki kolom <code>organisasi</code>, <code>location</code>/<code>lokasi</code>, <code>place</code>/<code>tempat</code>, <code>term</code>/<code>keyword</code>, atau <code>hashtags</code>, nilainya ikut dipakai: dinormalisasi ke kamus bila cocok, selain itu dihitung apa adanya. “Sebutan” = jumlah baris yang menyebut entitas; sentimen entitas = sentimen teks yang menyebutnya (tidak berarti sentimen <i>terhadap</i> entitas itu). Mode filter atau tombol “Fokus” menghitung ulang jaringan, metrik, dan sentimen hanya dari data yang lolos; baris tanpa teks (mis. like/share tanpa teks) ikut terbuang bila tidak punya kolom entitas.</li>
+          <li><b>Claude AI.</b> Seluruh teks unik dalam cakupan dikirim ke Claude (tier cepat) per batch 50 teks, tanpa batas jumlah; teks identik hanya diklasifikasi sekali. Instruksinya meminta sentimen penulis menurut maksud (termasuk sarkasme, yang juga ditandai). Pemakaian dihitung pada kuota Claude pengguna halaman. Hasil AI tetap harus divalidasi; label AI ikut di Sentimen CSV sehingga dapat diunggah ulang sebagai kolom <code>sentiment</code>.</li>
+          <li><b>Validasi manual.</b> Sampel acak sederhana (tanpa stratifikasi, agar akurasi tidak bias) dari teks yang belum berlabel; Anda melabeli dengan tombol atau tombol 1/2/3. Kesesuaian leksikon dan AI terhadap label manual dilaporkan sebagai akurasi (CI Wilson), Cohen’s κ, presisi/recall/F1. Satu pengkode belum menjamin reliabilitas; untuk publikasi, idealnya dua pengkode dengan κ antar-pengkode.</li>
+          <li><b>n kecil.</b> Warna sentimen node dan tabel aktor hanya memakai aktor dengan jumlah teks ≥ “Minimal teks per aktor” (bawaan 3). Persentase disertai interval kepercayaan 95% Wilson; platform dengan n &lt; 30 diberi tanda ⚠.</li>
+          <li><b>Kolom <code>sentiment</code>.</b> Bila CSV berisi label (positif/negatif/netral; juga pos/neg/neu, 1/−1/0) — misalnya hasil koding manual atau model IndoBERT — label itu dapat dipakai langsung, dan aplikasi menampilkan kesesuaian leksikon terhadap label tersebut (akurasi, presisi/recall, Cohen’s κ).</li>
+          <li><b>Sentimen pada jaringan.</b> Tiap akun mendapat rata-rata skor teks yang ia <i>tulis</i> dan yang ia <i>terima</i> (platform yang sama); tiap edge komentar mendapat rata-rata skor komentar di edge itu. Atribut ini ikut di GEXF (<code>sentiment_written_mean</code>, <code>sentiment_received_mean</code>, <code>negative_received_n</code>; edge: <code>sentiment_mean</code>, <code>sentiment_n</code>, <code>negative_n</code>).</li>
+          <li><b>Ekspor.</b> GEXF 1.3 (Gephi). Di dalam Claude, GEXF dibungkus <code>.zip</code> karena penampil membatasi ekstensi unduhan.</li>
+        </ul>
+      </details>
+    </section>
+  </main>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal" id="valModal" role="dialog" aria-modal="true" aria-labelledby="valTitle">
+  <div class="mbox">
+    <div style="display:flex;justify-content:space-between;gap:10px;align-items:baseline"><h3 id="valTitle">Validasi manual</h3><span class="sub" id="valProg"></span></div>
+    <div class="prog"><i id="valBar"></i></div>
+    <div class="sub" id="valMeta" style="margin-top:12px"></div>
+    <div class="ctext" id="valText"></div>
+    <div class="sub" style="margin-bottom:8px">Labeli sentimen <b>penulis</b> menurut maksudnya (sindiran/sarkasme = sesuai maksud). Pertanyaan atau informasi tanpa sikap = netral.</div>
+    <div class="row">
+      <button class="btn codebtn pos" data-l="pos">Positif<kbd>1</kbd></button>
+      <button class="btn codebtn neu" data-l="neu">Netral<kbd>2</kbd></button>
+      <button class="btn codebtn neg" data-l="neg">Negatif<kbd>3</kbd></button>
+    </div>
+    <div class="row" style="margin-top:10px">
+      <button class="btn sm" id="valBack">‹ Kembali<kbd style="margin-left:6px;font-family:var(--mono);font-size:10px;color:var(--muted)">←</kbd></button>
+      <button class="btn sm" id="valSkip">Lewati<kbd style="margin-left:6px;font-family:var(--mono);font-size:10px;color:var(--muted)">0</kbd></button>
+      <button class="btn sm" id="valExport">Unduh label (CSV)</button>
+      <button class="btn sm primary" id="valDone">Selesai &amp; hitung</button>
+    </div>
+  </div>
+</div>
+<div class="gbusy" id="gbusy"><div style="text-align:center"><div class="spin"></div><span id="gbusyMsg">Menghitung…</span></div></div>
+
+<script id="core">
+/*__SENT__*/
+/*__CORE__*/
+</script>
+
+<script>
+(function(){
+'use strict';
+var PALETTE=['#4e9bff','#ff9f43','#2ed3a0','#e9579b','#a78bfa','#facc15','#22d3ee','#f87171','#84cc16','#fb7185','#c084fc','#38bdf8'];
+var OTHER='#5b6782',POS='#2ed3a0',NEU='#8d9bb8',NEG='#f87171',NOSENT='#3a4560';
+var PLATS=[
+  ['tiktok','TikTok','#25f4ee','Share/Repost','Komentar','Like'],
+  ['instagram','Instagram','#e1306c','Share/Repost','Komentar','Like'],
+  ['x','X','#cbd5e1','Retweet','Reply','Like'],
+  ['youtube','YouTube','#ff3d3d','Share','Komentar','Like'],
+  ['threads','Threads','#a3a3a3','Repost','Reply','Like'],
+  ['facebook','Facebook','#3b82f6','Share','Komentar','Like/Reaksi'],
+  ['media','Media Online','#a78bfa','Share','Komentar',null]];
+var PL={lainnya:{name:'Lainnya',color:'#64748b',share:'Share',reply:'Komentar',like:'Like'}};
+PLATS.forEach(function(p){PL[p[0]]={name:p[1],color:p[2],share:p[3],reply:p[4],like:p[5]};});
+function pName(p){return (PL[p]||{name:p}).name;}
+function netName(p,net){var o=PL[p]||PL.lainnya;return net==='retweet'?o.share:net==='like'?(o.like||'Like'):net==='cooc'?'Co-occurrence':net==='quote'?'Quote':net==='mention'?'Mention':o.reply;}
+function netsOf(p){var b=(p==='media'?['retweet','reply']:['retweet','reply','like']).filter(function(x){return famOn(x);});['mention','cooc','quote'].forEach(function(x){if(state.all&&state.all.res[p]&&state.all.res[p][x]&&famOn(x))b=b.concat(x);});return b;}
+function hasNet(p,net){return !!(state.all&&state.all.res[p]&&state.all.res[p][net]);}
+var $=function(id){return document.getElementById(id);};
+var state={records:null,report:null,all:null,plat:'all',net:'retweet',fileName:null,filePlat:'x',opts:null,
+  sent:{source:'lexicon',scope:'comments',lex:SENT.BASE,lexName:null,minN:3},isDemo:false,aiMap:new Map(),aiSar:0};
+var sampleFn=null;
+try{ if(window.claude&&typeof window.claude.use==='function'){ window.claude.use('sample').then(function(f){sampleFn=f;updateAiUi();}).catch(function(){}); } }catch(e){}
+function tkey(t){return String(t||'').trim().toLowerCase().replace(/\s+/g,' ');}
+function wilson(k,n){if(!n)return null;var z=1.96,p=k/n,d=1+z*z/n,c=(p+z*z/(2*n))/d,h=z*Math.sqrt(p*(1-p)/n+z*z/(4*n*n))/d;return [Math.max(0,c-h),Math.min(1,c+h)];}
+function ciTxt(k,n){var w=wilson(k,n);return w?fmt(100*w[0],0)+'–'+fmt(100*w[1],0)+'%':'–';}
+var downloads=null;
+try{ if(window.claude&&typeof window.claude.use==='function'){ window.claude.use('downloads').then(function(d){downloads=d;}).catch(function(){}); } }catch(e){}
+
+function toast(msg,ms){var t=$('toast');t.textContent=msg;t.style.display='block';clearTimeout(toast._t);toast._t=setTimeout(function(){t.style.display='none';},ms||3200);}
+function esc(s){return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
+function fmt(v,d){if(v==null||isNaN(v))return '–';return Number(v).toLocaleString('id-ID',{maximumFractionDigits:d==null?0:d,minimumFractionDigits:d==null?0:Math.min(d,2)});}
+function fmtSci(v){if(v==null||isNaN(v))return '–';if(v===0)return '0';if(Math.abs(v)<0.0001)return v.toExponential(2);return v.toFixed(4);}
+function fmtS(v){return v==null||isNaN(v)?'–':(v>0?'+':'')+v.toFixed(2);}
+function pct(a,b){return b?fmt(100*a/b,1)+'%':'–';}
+function hexRgb(h){var k=d3.rgb(h);return[Math.round(k.r)||0,Math.round(k.g)||0,Math.round(k.b)||0];}
+function commColor(c){return c<PALETTE.length?PALETTE[c]:OTHER;}
+var iPos=d3.interpolateRgb(NEU,POS),iNeg=d3.interpolateRgb(NEU,NEG);
+function sentColor(v){if(v==null||isNaN(v))return NOSENT;return v>=0?iPos(Math.min(1,v/0.6)):iNeg(Math.min(1,-v/0.6));}
+function labColor(l){return l==='pos'?POS:l==='neg'?NEG:NEU;}
+function labName(l){return l==='pos'?'Positif':l==='neg'?'Negatif':'Netral';}
+function cur(){return state.all&&state.plat!=='all'&&state.all.res[state.plat]?state.all.res[state.plat][state.net]||null:null;}
+
+/* ---------- sentiment scoring ---------- */
+function inScope(r){return state.sent.scope==='all'?(r.text&&r.text.trim()!==''||r.man!=null):(r.type==='reply'||r.type==='quote');}
+function scoreOne(r,src,lex){
+  r.s=null;r.lab=null;r.lx=null;r.ai=null;
+  if(!inScope(r)) return;
+  if(r.text&&r.text.trim()){var q=SENT.score(r.text,lex);r.lx=q.label;r.lxs=q.compound;var a=state.aiMap.get(tkey(r.text));if(a)r.ai=a;}
+  if(src==='column'){ if(r.man){r.lab=r.man;r.s=r.man==='pos'?1:r.man==='neg'?-1:0;} }
+  else if(src==='ai'){ if(r.ai){r.lab=r.ai.s;r.s=r.ai.s==='pos'?1:r.ai.s==='neg'?-1:0;} }
+  else if(r.lx){r.lab=r.lx;r.s=r.lxs;}
+}
+function scoreRecords(){var src=state.sent.source,lex=state.sent.lex;state.records.forEach(function(r){scoreOne(r,src,lex);});}
+function scoreRecordsAsync(){
+  var recs=state.records,src=state.sent.source,lex=state.sent.lex,i=0,N=recs.length,CH=6000;
+  if(N<=CH){scoreRecords();return Promise.resolve();}
+  $('gbusy').classList.add('on');
+  return new Promise(function(res){(function step(){var e=Math.min(N,i+CH);for(;i<e;i++)scoreOne(recs[i],src,lex);$('gbusyMsg').textContent='Menilai sentimen '+fmt(i)+' / '+fmt(N)+' teks…';if(i<N)setTimeout(step,0);else res();})();});
+}
+function lexInfo(){
+  var s=state.sent,h;
+  if(s.source==='column') h='Memakai label manual (<b>'+esc(state.report.manualCol)+'</b>); hanya teks berlabel yang masuk analisis. Leksikon tetap dihitung untuk perbandingan.';
+  else if(s.source==='ai'){var cv=aiCoverage(null);h='Memakai label <b>Claude AI</b>: '+fmt(cv.done)+' dari '+fmt(cv.total)+' teks unik sudah diklasifikasi; teks yang belum tidak masuk analisis.';}
+  else h='Leksikon: <b>'+(s.lexName?esc(s.lexName):'bawaan')+'</b> ('+fmt(SENT.size(s.lex))+' entri).';
+  $('lexInfo').innerHTML=h;
+}
+
+/* ---------- worker ---------- */
+var worker=null;
+function makeWorker(){
+  try{
+    var src=$('core').textContent+'\nself.onmessage=function(ev){var d=ev.data;try{var out=SNA.analyzeAll(d.records,d.opts,function(p,ty,f){self.postMessage({progress:p,ty:ty,frac:f});});self.postMessage({done:out});}catch(e){self.postMessage({error:String(e&&e.message||e)});}};';
+    return new Worker(URL.createObjectURL(new Blob([src],{type:'text/javascript'})));
+  }catch(e){return null;}
+}
+function compute(records,opts){
+  var light=records.map(function(r){var q=r.type==='quote';return{a:r.a,t:r.t,type:q&&state.linkRecalc&&!state.links.q_acc?'quote_off':r.type,ts:r.ts,p:r.p,s:r.s,lab:r.lab,lt:q?'q_acc':undefined};}).concat(linkRecords(records));
+  return new Promise(function(resolve,reject){
+    if(!worker) worker=makeWorker();
+    if(worker){
+      worker.onmessage=function(ev){var d=ev.data;
+        if(d.progress){$('gbusyMsg').textContent='Menghitung '+pName(d.progress)+' · '+netName(d.progress,d.ty)+'… '+Math.round(d.frac*100)+'%';return;}
+        if(d.error){reject(new Error(d.error));return;}
+        resolve(d.done);};
+      worker.onerror=function(){worker=null;runMain();};
+      worker.postMessage({records:light,opts:opts});
+    } else runMain();
+    function runMain(){setTimeout(function(){try{resolve(SNA.analyzeAll(light,opts));}catch(e){reject(e);}},30);}
+  });
+}
+
+/* ---------- input ---------- */
+function assignFilePlat(p){state.filePlat=p;state.records.forEach(function(r){if(r._np)r.p=p;});}
+function isoDay(ts){var d=new Date(ts);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function inWindow(r){if(state.q&&!r.qok)return false;if(entActive()&&!entPass(r))return false;var o=state.opts||{};if(o.from==null&&o.to==null)return true;if(isNaN(r.ts))return false;if(o.from!=null&&r.ts<o.from)return false;if(o.to!=null&&r.ts>o.to)return false;return true;}
+function platCounts(){var c={};if(!state.records)return c;state.records.forEach(function(r){c[r.p]=(c[r.p]||0)+1;});return c;}
+function getOpts(){
+  var o={seed:parseInt($('seed').value,10)||42,resolution:Math.max(0.05,parseFloat($('res').value)||1),keepSelf:$('self').checked,norm:state.vos.norm};
+  if($('dFrom').value) o.from=new Date($('dFrom').value+'T00:00:00').getTime();
+  if($('dTo').value) o.to=new Date($('dTo').value+'T23:59:59.999').getTime();
+  return o;
+}
+function run(){
+  if(!state.records) return;
+  var o=getOpts();
+  $('gbusy').classList.add('on');$('gbusyMsg').textContent='Menghitung…';
+  compute((entActive()||state.q)?state.records.filter(function(r){return (!state.q||r.qok)&&entPass(r);}):state.records,o).then(function(all){
+    state.all=all;state.opts=o;
+    $('gbusy').classList.remove('on');
+    if(state.plat==='__best__'){var best=null,bw=-1;all.platforms.forEach(function(p){var e=0;['retweet','reply','like'].forEach(function(n){if(all.res[p][n])e+=all.res[p][n].g.edges.length;});if(e>bw){bw=e;best=p;}});
+      state.plat=best&&bw>0?best:'all';
+      if(best&&bw>0&&all.res[best].retweet.g.n===0&&all.res[best].reply.g.n>0)state.net='reply';}
+    if(state.plat!=='all'&&!all.res[state.plat]) state.plat='all';
+    if(state.plat!=='all'&&all.res[state.plat]&&(!all.res[state.plat][state.net]||!all.res[state.plat][state.net].g.n)){var alt=netsOf(state.plat).filter(function(n){return all.res[state.plat][n]&&all.res[state.plat][n].g.n;})[0];if(alt&&alt!==state.net){state.net=alt;if(entActive())toast('Jaringan '+netName(state.plat,state.net==='retweet'?'reply':'retweet')+' kosong setelah filter entitas; menampilkan '+netName(state.plat,alt)+'.',5000);}}
+    state.runId=(state.runId||0)+1;
+    ['exGexf','cpGexf','exCsv','exSent','exPdf'].forEach(function(id){$(id).disabled=false;});
+    renderReport();renderChips();render(true);
+  }).catch(function(e){$('gbusy').classList.remove('on');toast('Gagal: '+e.message,6000);});
+}
+function renderReport(){
+  var r=state.report,o=state.opts;
+  var types=Object.keys(r.byType).sort(function(a,b){return r.byType[b]-r.byType[a];}).map(function(k){return esc(k)+' <b>'+fmt(r.byType[k])+'</b>';}).join(' · ');
+  var h=(state.isDemo?'<span class="warn"><b>DATA SINTETIS</b></span><br>':'')+'<b>'+esc(state.fileName||'')+'</b><br>'+fmt(r.rows)+' baris · pemisah “'+(state.delim==='\t'?'tab':state.delim)+'”<br>'+types;
+  h+='<br>Kolom platform: '+(r.hasPlatform?'<b>'+esc(r.platformCol)+'</b>':'<span class="warn">tidak ada → '+pName(state.filePlat)+'</span>');
+  h+='<br>Kolom sentiment: '+(r.hasManual?'<b>'+esc(r.manualCol)+'</b>':'tidak ada');
+  var nS=state.records.filter(function(x){return x.s!=null&&inWindow(x);}).length;
+  h+='<br>Teks bersentimen: <b>'+fmt(nS)+'</b>';
+  if(r.unknownType) h+='<br><span class="warn">'+fmt(r.unknownType)+' baris type tak dikenal diabaikan.</span>';
+  if(r.likeMedia) h+='<br><span class="warn">'+fmt(r.likeMedia)+' baris like di Media Online diabaikan (jaringan like tidak berlaku).</span>';
+  if(r.derivedTarget) h+='<br>target_user diisi dari teks (“RT @…” / “@…”): <b>'+fmt(r.derivedTarget)+'</b>';
+  if(r.noTarget) h+='<br><span class="warn">'+fmt(r.noTarget)+' share/komentar tanpa target_user (tidak membentuk edge).</span>';
+  if(r.badDate) h+='<br><span class="warn">'+fmt(r.badDate)+' created_at tidak terbaca.</span>';
+  if(r.missingCols.length) h+='<br><span class="warn">Kolom tidak ada: '+r.missingCols.join(', ')+'.</span>';
+  if(state.tsRange) h+='<br>Rentang: '+isoDay(state.tsRange[0])+' s.d. '+isoDay(state.tsRange[1])+((o.from||o.to)?' · <b>filter aktif</b>':'');
+  $('report').innerHTML=h;
+}
+
+/* ---------- platform chips ---------- */
+function renderChips(){
+  var cnt=platCounts(),has=!!state.records,total=0;
+  Object.keys(cnt).forEach(function(k){total+=cnt[k];});
+  var list=PLATS.map(function(p){return p[0];});if(cnt.lainnya)list.push('lainnya');
+  var h='<button class="chip'+(state.plat==='all'?' on':'')+'" data-p="all"'+(has?'':' disabled')+'><span class="pd" style="background:linear-gradient(135deg,#25f4ee,#e1306c,#a78bfa)"></span>Semua Platform<span class="ct">'+fmt(total)+'</span></button>';
+  list.forEach(function(p){var n=cnt[p]||0;h+='<button class="chip'+(state.plat===p?' on':'')+'" data-p="'+p+'"'+(n?'':' disabled')+' title="'+(n?fmt(n)+' baris':'Tidak ada data')+'"><span class="pd" style="background:'+PL[p].color+'"></span>'+PL[p].name+'<span class="ct">'+fmt(n)+'</span></button>';});
+  $('chips').innerHTML=h;
+  syncSources();
+  $('chips').querySelectorAll('.chip').forEach(function(b){b.onclick=function(){if(b.dataset.p===state.plat)return;state.plat=b.dataset.p;renderChips();render(true);updateAiUi();};});
+  var pn=$('pnote');
+  if(has&&!state.report.hasPlatform){
+    pn.classList.remove('hide');
+    pn.innerHTML='CSV tidak memiliki kolom <code>platform</code>. Seluruh file ini berasal dari: <select id="filePlat">'+PLATS.map(function(p){return '<option value="'+p[0]+'"'+(p[0]===state.filePlat?' selected':'')+'>'+p[1]+'</option>';}).join('')+'</select>';
+    $('filePlat').onchange=function(){assignFilePlat(this.value);state.plat=this.value;run();};
+  } else if(has&&cnt.lainnya){
+    var u=state.report.rawPlatformsUnknown,ks=Object.keys(u).sort(function(a,b){return u[b]-u[a];}).slice(0,6);
+    pn.classList.remove('hide');pn.innerHTML='<span class="warn">Nilai platform tak dikenali (masuk “Lainnya”): '+ks.map(function(k){return esc(k)+' ('+u[k]+')';}).join(', ')+'</span>';
+  } else pn.classList.add('hide');
+}
+
+/* ---------- render dispatch ---------- */
+function render(fresh){
+  var none=!state.all,ov=!none&&state.plat==='all';
+  $('welcome').classList.toggle('hide',!none);
+  $('ovView').classList.toggle('hide',none||!ov);$('pView').classList.toggle('hide',none||ov);
+  $('cpGexf').disabled=ov||!state.all;
+  if(!state.all) return;
+  if(ov) renderOverview(); else show(state.net,fresh);
+}
+
+/* ---------- sentiment stats ---------- */
+function sentStats(p){
+  var recs=state.records.filter(function(r){return r.p===p&&r.s!=null&&inWindow(r);});
+  var st={n:recs.length,pos:0,neu:0,neg:0,sum:0,days:new Map(),recs:recs};
+  recs.forEach(function(r){st[r.lab]++;st.sum+=r.s;
+    if(!isNaN(r.ts)){var d=isoDay(r.ts),o=st.days.get(d);if(!o){o={pos:0,neu:0,neg:0};st.days.set(d,o);}o[r.lab]++;}});
+  st.mean=st.n?st.sum/st.n:null;
+  return st;
+}
+var NEGW=new Set('tidak tak bukan belum gak nggak ngga enggak kagak kurang sangat banget sekali amat paling terlalu tapi tetapi namun jangan bgt'.split(' '));
+var EMO_RE=/\p{Extended_Pictographic}/gu;
+function wordStats(recs){
+  var pos=new Map(),neg=new Map(),neu=new Map(),lex=state.sent.lex;
+  function add(m,k){m.set(k,(m.get(k)||0)+1);}
+  recs.forEach(function(r){if(!r.text)return;
+    var q=SENT.score(r.text,lex),sp=new Set(),sn=new Set(),hk=new Set();
+    q.hits.forEach(function(h){hk.add(h[0]);if(h[1]>0){if(!sp.has(h[0])){sp.add(h[0]);add(pos,h[0]);}}else if(!sn.has(h[0])){sn.add(h[0]);add(neg,h[0]);}});
+    var lt=r.text.toLowerCase().replace(/https?:\/\/\S+|@[\w.]+|#[\p{L}\p{N}_]+/gu,' ');
+    var ws=lt.match(/\p{L}{3,}/gu)||[],seen=new Set();
+    ws.forEach(function(w){w=w.replace(/(.)\1{2,}/g,'$1$1');if(seen.has(w)||STOP.has(w)||NEGW.has(w)||lex.hasOwnProperty(w))return;seen.add(w);add(neu,w);});
+    var em=r.text.match(EMO_RE);if(em)new Set(em).forEach(function(e){if(!hk.has(e))add(neu,e);});
+  });
+  function top(m,n){return Array.from(m.entries()).sort(function(a,b){return b[1]-a[1];}).slice(0,n);}
+  return {pos:top(pos,70),neg:top(neg,70),neu:top(neu,70)};
+}
+
+function agreement(recs,key){
+  key=key||'lx';
+  var pairs=recs.filter(function(r){return r.man&&(key==='ai'?r.ai:r.lx);}).map(function(r){return{man:r.man,lx:key==='ai'?r.ai.s:r.lx};});
+  if(pairs.length<5) return null;
+  var L=['pos','neu','neg'],M={};L.forEach(function(a){M[a]={pos:0,neu:0,neg:0};});
+  pairs.forEach(function(r){M[r.man][r.lx]++;});
+  var n=pairs.length,ok=0;L.forEach(function(a){ok+=M[a][a];});
+  var po=ok/n,pe=0;L.forEach(function(a){var rt=0,ct=0;L.forEach(function(b){rt+=M[a][b];ct+=M[b][a];});pe+=(rt/n)*(ct/n);});
+  var per=L.map(function(a){var tp=M[a][a],pp=0,ap=0;L.forEach(function(b){pp+=M[b][a];ap+=M[a][b];});var pr=pp?tp/pp:null,rc=ap?tp/ap:null;return{l:a,p:pr,r:rc,f:(pr&&rc)?2*pr*rc/(pr+rc):null,support:ap};});
+  return {n:n,acc:po,kappa:pe<1?(po-pe)/(1-pe):null,M:M,per:per};
+}
+
+/* ---------- overview ---------- */
+function renderOverview(){
+  var A=state.all,rows=A.platforms.map(function(p){
+    var R=A.res[p],st=sentStats(p);
+    var tw=function(g){return g.edges.reduce(function(s,e){return s+e.w;},0);};
+    return {p:p,sh:R.retweet,rp:R.reply,lk:R.like||null,shI:tw(R.retweet.g),rpI:tw(R.reply.g),lkI:R.like?tw(R.like.g):null,st:st};
+  });
+  state.ovRows=rows;
+  var h='<thead><tr><th>Platform</th><th class="r">Share: interaksi</th><th class="r">node</th><th class="r">kom. / Q</th><th class="r">Komentar: interaksi</th><th class="r">node</th><th class="r">kom. / Q</th><th class="r">Like: interaksi</th><th class="r">node</th><th class="r">kom. / Q</th><th class="r">Teks</th><th>Sentimen</th><th class="r">Skor rata2</th></tr></thead><tbody>';
+  rows.forEach(function(r){
+    var st=r.st,b=st.n?'<div class="sbar" title="Positif '+pct(st.pos,st.n)+' (95% CI '+ciTxt(st.pos,st.n)+') · Netral '+pct(st.neu,st.n)+' · Negatif '+pct(st.neg,st.n)+' (95% CI '+ciTxt(st.neg,st.n)+')"><i style="width:'+(100*st.pos/st.n)+'%;background:'+POS+'"></i><i style="width:'+(100*st.neu/st.n)+'%;background:'+NEU+'"></i><i style="width:'+(100*st.neg/st.n)+'%;background:'+NEG+'"></i></div>':'<span class="sub">tidak ada teks</span>';
+    h+='<tr class="cl" data-p="'+r.p+'"><td><span class="dot" style="background:'+PL[r.p].color+';border-radius:3px"></span> <b>'+pName(r.p)+'</b><div class="sub">'+netsOf(r.p).map(function(n){return netName(r.p,n);}).join(' · ')+'</div></td>'+
+      '<td class="r val">'+fmt(r.shI)+'</td><td class="r val">'+fmt(r.sh.g.n)+'</td><td class="r val">'+(r.sh.g.n?fmt(r.sh.m.communities)+' / '+fmt(r.sh.m.modularity,3):'–')+'</td>'+
+      '<td class="r val">'+fmt(r.rpI)+'</td><td class="r val">'+fmt(r.rp.g.n)+'</td><td class="r val">'+(r.rp.g.n?fmt(r.rp.m.communities)+' / '+fmt(r.rp.m.modularity,3):'–')+'</td>'+
+      (r.lk?'<td class="r val">'+fmt(r.lkI)+'</td><td class="r val">'+fmt(r.lk.g.n)+'</td><td class="r val">'+(r.lk.g.n?fmt(r.lk.m.communities)+' / '+fmt(r.lk.m.modularity,3):'–')+'</td>':'<td class="r sub" colspan="3" style="text-align:center">tidak berlaku</td>')+
+      '<td class="r val">'+fmt(st.n)+(st.n&&st.n<30?' <span class="warn" title="n kecil: persentase tidak stabil">⚠</span>':'')+'</td><td>'+b+'</td><td class="r val" style="color:'+sentColor(st.mean)+'">'+fmtS(st.mean)+'</td></tr>';
+  });
+  $('ovTable').innerHTML=h+'</tbody>';
+  renderOvGraphs();
+  renderEntOverview();
+  updateTypeCounts();
+  updateLinkCounts();updateLinkChips();
+  $('ovSub').textContent='· klik baris untuk membuka platform'+((state.opts.from||state.opts.to)?' · filter tanggal aktif':'');
+  $('ovTable').querySelectorAll('tr.cl').forEach(function(tr){tr.onclick=function(){state.plat=tr.dataset.p;renderChips();render(true);window.scrollTo({top:0,behavior:'smooth'});};});
+  var s='';
+  rows.filter(function(r){return r.st.n;}).forEach(function(r){var st=r.st;
+    s+='<div class="dist"><div class="r" style="grid-template-columns:110px 1fr 240px"><span><b>'+pName(r.p)+'</b></span><div class="sbar" style="height:14px"><i style="width:'+(100*st.pos/st.n)+'%;background:'+POS+'"></i><i style="width:'+(100*st.neu/st.n)+'%;background:'+NEU+'"></i><i style="width:'+(100*st.neg/st.n)+'%;background:'+NEG+'"></i></div><span class="num"><span style="color:'+POS+'">'+pct(st.pos,st.n)+'</span> · <span style="color:'+NEU+'">'+pct(st.neu,st.n)+'</span> · <span style="color:'+NEG+'">'+pct(st.neg,st.n)+'</span> <span class="sub">n='+fmt(st.n)+'</span><br><span class="sub">neg 95% CI '+ciTxt(st.neg,st.n)+'</span></span></div></div>';});
+  $('ovSent').innerHTML=s||'<div class="sub">Tidak ada teks bersentimen. Pastikan kolom <code>text</code> terisi pada baris komentar, atau pilih “Semua teks”.</div>';
+  $('ovSentSub').innerHTML='· <span style="color:'+POS+'">positif</span> · <span style="color:'+NEU+'">netral</span> · <span style="color:'+NEG+'">negatif</span> · sumber: '+srcName()+' · ⚠ = n &lt; 30';
+}
+state.ovNet='retweet';
+function renderOvGraphs(){
+  var A=state.all,net=state.ovNet,box=$('ovGraphs'),rid=state.runId;
+  document.querySelectorAll('#ovNet .tab').forEach(function(b){b.classList.toggle('on',b.dataset.net===net);});
+  box.innerHTML=A.platforms.map(function(p){if(!A.res[p][net])return '<div style="background:var(--bg);border:1px dashed var(--line);border-radius:10px;padding:10px;font-size:12.5px"><b>'+pName(p)+'</b><div class="sub" style="margin-top:6px">Jaringan like tidak berlaku untuk '+pName(p)+'.</div></div>';var g=A.res[p][net].g;return '<div class="cl" data-p="'+p+'" style="background:var(--bg);border:1px solid var(--line);border-radius:10px;overflow:hidden;cursor:pointer"><div style="display:flex;justify-content:space-between;padding:8px 10px;font-size:12.5px"><b><span class="dot" style="background:'+PL[p].color+';border-radius:3px"></span> '+pName(p)+' · '+esc(netName(p,net))+'</b><span class="sub">'+fmt(g.n)+' node · '+fmt(g.edges.length)+' edge</span></div><div class="og" style="aspect-ratio:10/7;display:grid;place-items:center;color:var(--dim);font-size:12px">'+(g.n?'Menggambar…':'Tidak ada edge')+'</div></div>';}).join('');
+  box.querySelectorAll('[data-p]').forEach(function(el){el.onclick=function(){state.plat=el.dataset.p;state.net=net;renderChips();render(true);window.scrollTo({top:0,behavior:'smooth'});};});
+  var list=A.platforms.slice(),i=0;
+  (function next(){
+    if(state.runId!==rid||state.plat!=='all'||state.ovNet!==net||i>=list.length)return;
+    var p=list[i++],d=A.res[p][net];
+    if(d&&d.g.n){var lay=layoutFor(p,net,400),img=snapshot(lay,900,630,6,true),el=box.querySelector('[data-p="'+p+'"] .og');if(el)el.innerHTML='<img src="'+img+'" alt="Graf '+esc(pName(p))+'" style="width:100%;height:100%;display:block">';}
+    setTimeout(next,0);
+  })();
+}
+document.querySelectorAll('#ovNet .tab').forEach(function(b){b.onclick=function(){if(state.ovNet===b.dataset.net)return;state.ovNet=b.dataset.net;renderOvGraphs();};});
+function srcName(){return state.sent.source==='column'?'label manual':state.sent.source==='ai'?'Claude AI':'leksikon'+(state.sent.lexName?' unggahan':' bawaan');}
+
+/* ---------- platform view ---------- */
+var view={nodes:[],links:[],sim:null,transform:d3.zoomIdentity,sel:null,hover:null,labelSet:new Set(),nbr:null,paused:false,key:null};
+var cv=$('cv'),ctx=cv.getContext('2d'),DPR=1;
+function resize(){var r=$('gwrap').getBoundingClientRect();if(!r.width)return;DPR=window.devicePixelRatio||1;cv.width=r.width*DPR;cv.height=r.height*DPR;draw();}
+window.addEventListener('resize',resize);
+try{new ResizeObserver(function(){var had=cv.width;resize();if(!had&&view.nodes.length)setTimeout(fit,50);}).observe($('gwrap'));}catch(e){}
+
+function show(net,fresh){
+  state.net=net;var p=state.plat;
+  if(!hasNet(p,net)||!famOn(net)){net=state.net=netsOf(p)[0]||'retweet';}
+  $('tabShare').textContent=netName(p,'retweet');$('tabReply').textContent=netName(p,'reply');
+  $('tabLike').textContent=netName(p,'like');$('tabLike').classList.toggle('hide',!hasNet(p,'like'));
+  $('tabShare').classList.toggle('hide',!famOn('retweet'));$('tabReply').classList.toggle('hide',!famOn('reply'));$('tabMention').classList.toggle('hide',!hasNet(p,'mention')||!famOn('mention'));
+  $('tabCooc').classList.toggle('hide',!hasNet(p,'cooc')||!famOn('cooc'));$('tabQuote').classList.toggle('hide',!hasNet(p,'quote')||!famOn('quote'));
+  if((net==='cooc'||net==='quote')&&state._autoType!==p+net){state._autoType=p+net;$('cMode').value='type';}
+  updateLinkCounts();updateLinkChips();
+  document.querySelectorAll('.topbar .tab').forEach(function(b){b.classList.toggle('on',b.dataset.net===net);});
+  var d=cur();if(!d) return;var g=d.g,m=d.m;
+  $('netDesc').textContent=pName(p)+' · '+netName(p,net)+': '+(net==='like'?'penyuka (author) → pemilik postingan (target_user)':net==='mention'?'penulis → @akun yang disebut di teks':net==='cooc'?'entitas ↔ entitas yang muncul dalam teks yang sama (tak berarah)':net==='quote'?'sumber → yang dikutip/disebut (Account, Media → Named Entity, Term, Hashtag)':'author → target_user')+' · bobot = jumlah '+(net==='cooc'?'teks':net==='quote'?'kutipan/sebutan':'interaksi')+(net==='cooc'||net==='quote'?' · warna edge = jenis link':'');
+  state.visNodes=linkVisSet(g);
+  renderKpis(g,m);renderTables(g,m);
+  var dl=$('ulist');dl.innerHTML='';
+  var order=g.labels.map(function(_,i){return i;}).sort(function(a,b){return m.pagerank[b]-m.pagerank[a];});
+  order.slice(0,3000).forEach(function(i){var o=document.createElement('option');o.value=isEnt(g.labels[i])?dispLabel(g.labels[i]):g.labels[i];dl.appendChild(o);});
+  var ns=$('nShow'),key=p+'|'+net;ns.max=Math.max(10,g.n);ns.min=Math.min(10,g.n);
+  if(fresh||ns.dataset.key!==key) ns.value=Math.min(g.n,1500);
+  ns.dataset.key=key;$('nShowV').textContent=fmt(+ns.value)+' / '+fmt(g.n);
+  updateTypeCounts();
+  buildView();
+  if(fresh) renderSentiment(p);
+  if(fresh) renderEntities(p);
+}
+function renderKpis(g,m){
+  var totW=g.edges.reduce(function(s,e){return s+e.w;},0);
+  var items=[['Node',fmt(g.n),'node unik'],['Edge',fmt(state.net==='cooc'?g.edges.length/2:g.edges.length),fmt(state.net==='cooc'?totW/2:totW)+(state.net==='cooc'?' teks-pasangan':' interaksi')],['Densitas',m.density<0.001&&m.density>0?m.density.toExponential(2):fmt(m.density,4),'graf berarah'],
+    ['Resiprositas',state.net==='cooc'?'–':fmt(m.reciprocity*100,1)+'%',state.net==='cooc'?'tak berarah':'edge timbal-balik'],['Komunitas',fmt(m.communities),'Louvain'],['Modularitas',fmt(m.modularity,3),state.vos.norm==='association'?'Q · bobot asosiasi':'Q'],['Komponen lemah',fmt(m.components.count),'terbesar '+fmt(m.components.largest)]];
+  $('kpis').innerHTML=items.map(function(k){return '<div class="kpi"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>';}).join('');
+}
+function tableDefs(g,m,p,net){
+  var sh=net==='retweet',lk=net==='like',co=net==='cooc',qu=net==='quote',nm=netName(p,net).toLowerCase();
+  return [
+    {t:'In-degree',sub:net==='mention'?'paling banyak di-mention':co?'paling sering muncul bersama node lain':qu?'paling banyak dikutip/disebut':lk?'postingannya paling banyak disukai':sh?'paling banyak di-'+nm:'paling banyak menerima '+nm,val:function(i){return m.inW[i];},f:function(i){return fmt(m.inW[i]);},extra:function(i){return m.inC[i]+' akun';}},
+    {t:'Out-degree',sub:net==='mention'?'paling aktif me-mention':co?'sama dengan in-degree (tak berarah)':qu?'paling aktif mengutip/menyebut':lk?'paling aktif memberi like':sh?'paling aktif '+nm:'paling aktif memberi '+nm,val:function(i){return m.outW[i];},f:function(i){return fmt(m.outW[i]);},extra:function(i){return m.outC[i]+' akun';}},
+    {t:'Betweenness',sub:m.betweennessApprox?'aproksimasi ('+fmt(m.pivots)+' sumber)':'perantara jalur terpendek',val:function(i){return m.betweenness[i];},f:function(i){return fmtSci(m.betweenness[i]);}},
+    {t:'PageRank',sub:'pengaruh rekursif berbobot',val:function(i){return m.pagerank[i];},f:function(i){return fmtSci(m.pagerank[i]);}}];
+}
+function topIdx(g,fn,k){return g.labels.map(function(_,i){return i;}).sort(function(a,b){return fn(b)-fn(a)||(g.labels[a]<g.labels[b]?-1:1);}).slice(0,k||10);}
+/* ---------- graph ---------- */
+function nodeColor(i,m){
+  var mode=$('cMode').value;
+  if(mode==='type'){var d=cur();return ECAT[nodeType(d.g.labels[i])].color;}
+  var mn=state.sent.minN;
+  if(mode==='sout') return m.sent.outN[i]>=mn?sentColor(m.sent.outMean[i]):NOSENT;
+  if(mode==='sin') return m.sent.inN[i]>=mn?sentColor(m.sent.inMean[i]):NOSENT;
+  return commColor(m.community[i]);
+}
+function buildView(){
+  var d=cur();if(!d)return;var g=d.g,m=d.m,key=state.plat+'|'+state.net;
+  $('empty').classList.toggle('hide',g.n>0);
+  if(!g.n){
+    var ty=state.net,rows=state.records.filter(function(r){return r.p===state.plat&&r.type===ty;}),wt=rows.filter(function(r){return r.t;}).length,inw=rows.filter(function(r){return r.t&&inWindow(r);}).length;
+    var other=netsOf(state.plat).filter(function(n){return n!==state.net&&state.all.res[state.plat][n]&&state.all.res[state.plat][n].g.n;})[0]||'retweet',oN=state.all.res[state.plat][other]?state.all.res[state.plat][other].g.n:0;if(other===state.net)oN=0;
+    $('empty').innerHTML='<div><b>Jaringan '+esc(netName(state.plat,state.net))+' di '+pName(state.plat)+' kosong</b>'+
+      'Baris bertipe '+(ty==='retweet'?'share/retweet':ty==='like'?'like':'komentar/reply')+': '+fmt(rows.length)+' · dengan target_user: '+fmt(wt)+((state.opts.from||state.opts.to)?' · dalam rentang tanggal: '+fmt(inw):'')+
+      '<br>'+(entActive()?'<span class="warn">Filter/fokus entitas aktif: hanya baris yang teks atau kolomnya menyebut entitas yang dipakai. Share/like biasanya tidak punya teks sehingga ikut terbuang.</span><br>':'')+(rows.length===0?'Tidak ada baris tipe ini. Periksa nilai kolom <code>type</code>.':wt===0?'Semua baris tipe ini tidak punya <code>target_user</code>, sehingga tidak ada edge.':'Coba kosongkan filter tanggal.')+
+      (oN?'<br><button class="btn sm primary" id="goOther" style="margin-top:10px">Buka jaringan '+esc(netName(state.plat,other))+' ('+fmt(oN)+' node)</button>':'')+'</div>';
+    var go=document.getElementById('goOther');if(go)go.onclick=function(){show(other,false);};
+  }
+  if(view.sim) view.sim.stop();
+  var K=Math.min(g.n,+$('nShow').value||g.n);
+  var order=g.labels.map(function(_,i){return i;}).sort(function(a,b){return m.pagerank[b]-m.pagerank[a];});
+  var maxPr=m.pagerank[order[0]]||1,maxSz=0;g.labels.forEach(function(_,i){var v=nodeSizeVal(i,g,m);if(v>maxSz)maxSz=v;});maxSz=maxSz||1;
+  var lnet=isLinkNet(state.net),hasVis=null;
+  if(lnet&&!state.linkRecalc){hasVis=new Set();g.edges.forEach(function(ed){if(linkVisible(ed)){hasVis.add(ed.s);hasVis.add(ed.t);}});}
+  state.visNodes=hasVis;
+  var vorder=order.filter(function(i){return visOK(g.labels[i])&&(!hasVis||hasVis.has(i));});
+  var keep=vorder.slice(0,K),keepSet=new Set(keep);
+  if(g.n&&!keep.length&&lnet&&hasVis&&!hasVis.size){$('empty').classList.remove('hide');$('empty').innerHTML='<div><b>Tidak ada jenis link '+netName(state.plat,state.net)+' yang dicentang</b>Centang jenis link di sidebar (Edge / Link Types) atau di atas graf.</div>';}
+  else if(g.n&&!keep.length){$('empty').classList.remove('hide');$('empty').innerHTML='<div><b>Semua tipe node di jaringan ini sedang disembunyikan</b>Centang tipe node di sidebar (Node Types) atau di atas graf.</div>';}
+  var same=view.key===key,prev=new Map();if(same)view.nodes.forEach(function(n){prev.set(n.id,n);});
+  var pos=new Map();
+  view.nodes=keep.map(function(i){var o=prev.get(i);var n={id:i,label:g.labels[i],r:2.5+20*Math.sqrt(nodeSizeVal(i,g,m)/maxSz),c:nodeColor(i,m),sh:NSHAPE[nodeType(g.labels[i])]};if(o){n.x=o.x;n.y=o.y;}pos.set(i,n);return n;});
+  view.key=key;
+  var maxW=1;g.edges.forEach(function(e){if(e.w>maxW)maxW=e.w;});view.maxW=maxW;
+  var und=state.net==='cooc';
+  view.links=g.edges.filter(function(e){return e.s!==e.t&&keepSet.has(e.s)&&keepSet.has(e.t)&&(!und||e.s<e.t)&&(!lnet||state.linkRecalc||linkVisible(e));}).map(function(e){var lc=null;if(e.lt){var bk=null,bv=-1;for(var k in e.lt)if(e.lt[k]>bv){bv=e.lt[k];bk=k;}lc=LT[bk]?LT[bk].color:null;}return{source:pos.get(e.s),target:pos.get(e.t),w:e.w,sm:e.sN?e.sSum/e.sN:null,lc:lc};});
+  view.und=und;
+  view.sel=null;view.nbr=null;$('detail').style.display='none';
+  updateLabels();renderLegend(m);
+  var deg=new Map();view.links.forEach(function(l){deg.set(l.source.id,(deg.get(l.source.id)||0)+1);deg.set(l.target.id,(deg.get(l.target.id)||0)+1);});
+  function cnt(nd){return deg.get(nd.id)||1;}
+  var n=view.nodes.length;
+  view.sim=d3.forceSimulation(view.nodes)
+    .force('link',d3.forceLink(view.links).distance(function(l){return 18+l.source.r+l.target.r;}).strength(function(l){return Math.min(1,0.25+0.15*Math.log(1+l.w))/Math.sqrt(Math.min(cnt(l.source),cnt(l.target)));}))
+    .force('charge',d3.forceManyBody().strength(n>800?-18:n>300?-35:-60).theta(0.9).distanceMax(600))
+    .force('collide',d3.forceCollide(function(d){return d.r+1.5;}).iterations(1))
+    .force('x',d3.forceX(0).strength(0.04)).force('y',d3.forceY(0).strength(0.04))
+    .alphaDecay(n>1000?0.04:0.025).on('tick',draw);
+  view.paused=false;$('pause').textContent='Jeda layout';
+  resize();
+  if(state.vos.layout==='vos'){view.sim.stop();if(!same){var rb0=$('gwrap').getBoundingClientRect();cvSel.call(zoom.transform,d3.zoomIdentity.translate(rb0.width/2,rb0.height/2).scale(0.6));}runVOS();return;}
+  if(!same){var rb=$('gwrap').getBoundingClientRect();cvSel.call(zoom.transform,d3.zoomIdentity.translate(rb.width/2,rb.height/2).scale(n>600?0.5:0.9));}
+  setTimeout(fit,n>800?1600:900);
+}
+function shapeSvg(sh){return sh==='star'?'M5.5 .2l1.4 3.6 3.9.2-3 2.4 1 3.8-3.3-2.1-3.3 2.1 1-3.8-3-2.4 3.9-.2z':sh==='circle'?'M5.5 .5a5 5 0 1 0 .01 0z':sh==='square'?'M1 1h9v9H1z':sh==='diamond'?'M5.5 0L11 5.5 5.5 11 0 5.5z':sh==='triangle'?'M5.5 0L11 10H0z':sh==='tridown'?'M5.5 11L11 1H0z':sh==='pentagon'?'M5.5 0L11 4.2 9 11H2L0 4.2z':'M5.5 0L10.3 2.75V8.25L5.5 11 .7 8.25V2.75z';}
+function recolor(){var d=cur();if(!d)return;view.nodes.forEach(function(n){n.c=nodeColor(n.id,d.m);});renderLegend(d.m);draw();}
+function updateLabels(){var N=+$('nLabel').value;$('nLabelV').textContent=N;var sorted=view.nodes.slice().sort(function(a,b){return b.r-a.r;});view.labelSet=new Set(sorted.slice(0,N).map(function(n){return n.id;}));draw();}
+function renderLegend(m){
+  var L=$('legend'),mode=$('cMode').value;
+  if(!view.nodes.length){L.classList.add('hide');return;}
+  var h;
+  if(mode==='type'){
+    var present={};view.nodes.forEach(function(n){present[nodeType(n.label)]=1;});
+    h='<div style="color:var(--muted);margin-bottom:3px">Tipe node</div>'+NTYPES.filter(function(t){return present[t[0]];}).map(function(t){return '<div><svg width="11" height="11"><path d="'+shapeSvg(t[2])+'" fill="'+ECAT[t[0]].color+'"/></svg>'+t[1]+'</div>';}).join('');
+  } else if(mode!=='community'){
+    h='<div style="color:var(--muted);margin-bottom:4px">'+(mode==='sout'?'Rata-rata sentimen teks yang ditulis':'Rata-rata sentimen teks yang diterima')+'</div>'+
+      '<div style="display:block"><div style="height:8px;width:160px;border-radius:4px;background:linear-gradient(90deg,'+NEG+','+NEU+','+POS+')"></div><div style="display:flex;justify-content:space-between;width:160px" class="sub"><span>−0,6</span><span>0</span><span>+0,6</span></div></div>'+
+      '<div><span class="dot" style="background:'+NOSENT+'"></span><span class="sub">n &lt; '+state.sent.minN+' teks (tidak cukup)</span></div>';
+  } else {
+    var size=new Map();m.community.forEach(function(c){size.set(c,(size.get(c)||0)+1);});
+    h='<div style="color:var(--muted);margin-bottom:3px">Komunitas (ukuran)</div>';
+    for(var c=0;c<Math.min(PALETTE.length,m.communities);c++) h+='<div><span class="dot" style="background:'+PALETTE[c]+'"></span>'+c+' <span class="sub">'+fmt(size.get(c))+' akun</span></div>';
+    if(m.communities>PALETTE.length){var rest=0;size.forEach(function(s,c){if(c>=PALETTE.length)rest+=s;});h+='<div><span class="dot" style="background:'+OTHER+'"></span>lainnya <span class="sub">'+fmt(rest)+' akun</span></div>';}
+  }
+  var lts={};view.links.forEach(function(l){if(l.lc)lts[l.lc]=1;});
+  var ltl=LTYPES.filter(function(x){return lts[x[3]];});
+  if(ltl.length)h+='<div style="color:var(--muted);margin:6px 0 3px">Jenis link</div>'+ltl.map(function(x){return '<div><svg width="16" height="8"><line x1="0" y1="4" x2="16" y2="4" stroke="'+x[3]+'" stroke-width="2.5"/></svg>'+(x[1]==='cooc'?'Co-occ: ':'Quote: ')+esc(x[2])+'</div>';}).join('');
+  h+='<div class="sub" style="margin-top:4px">ukuran node = '+sizeLabel()+(state.vos.layout==='vos'?' · layout VOS':'')+(state.vos.norm==='association'?' · klaster: association strength':'')+'</div>';
+  L.innerHTML=h;L.classList.remove('hide');
+}
+function draw(){
+  var w=cv.width,h=cv.height,t=view.transform;
+  ctx.setTransform(1,0,0,1,0,0);ctx.clearRect(0,0,w,h);
+  if(!view.nodes.length) return;
+  ctx.setTransform(DPR*t.k,0,0,DPR*t.k,DPR*t.x,DPR*t.y);
+  var sel=view.sel,nbr=view.nbr,many=view.links.length>4000,arrows=!many&&t.k>0.35,sm=$('cMode').value!=='community'&&state.net==='reply';
+  for(var i=0;i<view.links.length;i++){
+    var l=view.links[i],s=l.source,tg=l.target,on=!sel||(s.id===sel.id||tg.id===sel.id);
+    ctx.globalAlpha=sel?(on?0.85:0.04):(many?0.12:0.28);
+    ctx.strokeStyle=sm&&l.sm!=null?sentColor(l.sm):(on&&sel?(s.id===sel.id?'#9cc2ff':'#ffc58a'):(l.lc||'#7f8fb3'));
+    if(l.lc&&!sel)ctx.globalAlpha=Math.max(ctx.globalAlpha,0.45);
+    if(sm&&l.sm!=null&&!sel) ctx.globalAlpha=0.5;
+    ctx.lineWidth=(0.5+2.2*Math.log(1+l.w)/Math.log(1+view.maxW))/Math.sqrt(t.k);
+    var dx=tg.x-s.x,dy=tg.y-s.y,dist=Math.sqrt(dx*dx+dy*dy)||1,ex=tg.x-dx/dist*(tg.r+1),ey=tg.y-dy/dist*(tg.r+1);
+    ctx.beginPath();ctx.moveTo(s.x,s.y);ctx.lineTo(ex,ey);ctx.stroke();
+    if(arrows&&!view.und&&(on||!sel)&&dist>tg.r+6){var ah=Math.min(7,3+ctx.lineWidth*1.6)/Math.sqrt(t.k),ux=dx/dist,uy=dy/dist;ctx.fillStyle=ctx.strokeStyle;ctx.beginPath();ctx.moveTo(ex,ey);ctx.lineTo(ex-ux*ah-uy*ah*0.5,ey-uy*ah+ux*ah*0.5);ctx.lineTo(ex-ux*ah+uy*ah*0.5,ey-uy*ah-ux*ah*0.5);ctx.closePath();ctx.fill();}
+  }
+  for(i=0;i<view.nodes.length;i++){
+    var n=view.nodes[i],act=!sel||n.id===sel.id||(nbr&&nbr.has(n.id));
+    ctx.globalAlpha=act?1:0.12;shapePath(ctx,n.sh||'circle',n.x,n.y,n.r);ctx.fillStyle=n.c;ctx.fill();
+    ctx.lineWidth=(n===view.hover||n===sel?2.2:0.8)/t.k;ctx.strokeStyle=n===view.hover||n===sel?'#fff':'rgba(4,13,58,.9)';ctx.stroke();
+  }
+  ctx.globalAlpha=1;ctx.font='500 '+(11/t.k)+'px Inter,sans-serif';ctx.textAlign='center';ctx.textBaseline='top';
+  for(i=0;i<view.nodes.length;i++){
+    n=view.nodes[i];
+    var showL=sel?(n.id===sel.id||(nbr&&nbr.has(n.id)&&(view.labelSet.has(n.id)||nbr.size<40))):view.labelSet.has(n.id);
+    if(n===view.hover)showL=true;if(!showL)continue;
+    var txt=dispLabel(n.label),ty=n.y+n.r+2/t.k;ctx.lineWidth=3/t.k;ctx.strokeStyle='rgba(4,13,58,.9)';ctx.strokeText(txt,n.x,ty);ctx.fillStyle='#eef1ff';ctx.fillText(txt,n.x,ty);
+  }
+}
+var zoom=d3.zoom().scaleExtent([0.05,12]).on('zoom',function(ev){view.transform=ev.transform;draw();});
+var cvSel=d3.select(cv);
+function findNode(mx,my){var t=view.transform,x=(mx-t.x)/t.k,y=(my-t.y)/t.k,best=null,bd=Infinity;for(var i=0;i<view.nodes.length;i++){var n=view.nodes[i],dx=n.x-x,dy=n.y-y,d=dx*dx+dy*dy,rr=(n.r+4/t.k);if(d<rr*rr&&d<bd){bd=d;best=n;}}return best;}
+cvSel.call(d3.drag().container(cv)
+  .filter(function(ev){var p=d3.pointer(ev,cv);return !ev.button&&!!findNode(p[0],p[1]);})
+  .subject(function(ev){var p=d3.pointer(ev.sourceEvent,cv);return findNode(p[0],p[1]);})
+  .on('start',function(ev){if(!ev.active&&!view.paused&&state.vos.layout!=='vos')view.sim.alphaTarget(0.2).restart();ev.subject.fx=ev.subject.x;ev.subject.fy=ev.subject.y;ev.subject._moved=false;})
+  .on('drag',function(ev){var t=view.transform,p=d3.pointer(ev.sourceEvent,cv);ev.subject.fx=(p[0]-t.x)/t.k;ev.subject.fy=(p[1]-t.y)/t.k;ev.subject.x=ev.subject.fx;ev.subject.y=ev.subject.fy;ev.subject._moved=true;draw();})
+  .on('end',function(ev){if(!ev.active&&state.vos.layout!=='vos')view.sim.alphaTarget(0);if(!ev.subject._moved)select(ev.subject);if(state.vos.layout!=='vos'){ev.subject.fx=null;ev.subject.fy=null;}}));
+cvSel.call(zoom).on('dblclick.zoom',null);
+cv.addEventListener('mousemove',function(e){
+  var r=cv.getBoundingClientRect(),n=findNode(e.clientX-r.left,e.clientY-r.top);
+  if(n!==view.hover){view.hover=n;draw();}
+  var tip=$('tip');if(!n){tip.style.display='none';return;}
+  var m=cur().m,i=n.id,se=m.sent;
+  tip.innerHTML='<div class="h"><span class="dot" style="background:'+n.c+'"></span>'+esc(dispLabel(n.label))+' '+typeBadge(nodeType(n.label))+'</div><table><tr><td>Komunitas</td><td>'+m.community[i]+'</td></tr><tr><td>In-degree</td><td>'+fmt(m.inW[i])+' ('+m.inC[i]+')</td></tr><tr><td>Out-degree</td><td>'+fmt(m.outW[i])+' ('+m.outC[i]+')</td></tr><tr><td>Betweenness</td><td>'+fmtSci(m.betweenness[i])+'</td></tr><tr><td>PageRank</td><td>'+fmtSci(m.pagerank[i])+'</td></tr><tr><td>Sentimen ditulis</td><td>'+fmtS(se.outMean[i])+' (n='+se.outN[i]+')</td></tr><tr><td>Sentimen diterima</td><td>'+fmtS(se.inMean[i])+' (n='+se.inN[i]+')</td></tr></table>';
+  tip.style.display='block';var x=e.clientX-r.left+14,y=e.clientY-r.top+14;if(x+210>r.width)x-=230;if(y+180>r.height)y-=190;tip.style.left=x+'px';tip.style.top=y+'px';
+});
+cv.addEventListener('mouseleave',function(){view.hover=null;$('tip').style.display='none';draw();});
+cv.addEventListener('click',function(e){if(e.defaultPrevented)return;var r=cv.getBoundingClientRect();if(!findNode(e.clientX-r.left,e.clientY-r.top))select(null);});
+function rankOf(arr,i){var v=arr[i],c=1;for(var k=0;k<arr.length;k++)if(arr[k]>v)c++;return c;}
+function select(n){
+  view.sel=n;if(!n){view.nbr=null;$('detail').style.display='none';draw();return;}
+  var d=cur(),g=d.g,m=d.m,i=n.id,se=m.sent;view.nbr=new Set();var outs=[],ins=[];
+  g.edges.forEach(function(e){if(e.s===i&&e.t!==i){view.nbr.add(e.t);outs.push(e);}if(e.t===i&&e.s!==i){view.nbr.add(e.s);ins.push(e);}});
+  outs.sort(function(a,b){return b.w-a.w;});ins.sort(function(a,b){return b.w-a.w;});
+  var nm=netName(state.plat,state.net),verb=state.net==='mention'?['Di-mention oleh','Me-mention']:state.net==='cooc'?['Muncul bersama','Muncul bersama']:state.net==='quote'?['Dikutip/disebut oleh','Mengutip/menyebut']:state.net==='like'?['Disukai oleh','Menyukai postingan']:state.net==='retweet'?['Di-'+nm.toLowerCase()+' oleh','Me-'+nm.toLowerCase()]:['Menerima '+nm.toLowerCase()+' dari','Memberi '+nm.toLowerCase()+' ke'];
+  function chips(list,key){return list.slice(0,12).map(function(e){return '<span data-i="'+e[key]+'"'+(e.sN?' style="border-left:3px solid '+sentColor(e.sSum/e.sN)+'"':'')+'>'+esc(dispLabel(g.labels[e[key]]))+' ×'+e.w+'</span>';}).join('')+(list.length>12?' <span class="sub">+'+(list.length-12)+'</span>':'');}
+  var dd=$('detail');
+  dd.innerHTML='<button class="x" aria-label="Tutup">×</button><h3>'+esc(dispLabel(n.label))+'</h3><div>'+typeBadge(nodeType(n.label))+' ·<span class="dot" style="background:'+commColor(m.community[i])+'"></span> Komunitas '+m.community[i]+' · '+pName(state.plat)+'</div>'+
+    '<table><tr><td>In-degree</td><td>'+fmt(m.inW[i])+' · #'+rankOf(m.inW,i)+'</td></tr><tr><td>Out-degree</td><td>'+fmt(m.outW[i])+' · #'+rankOf(m.outW,i)+'</td></tr><tr><td>Betweenness</td><td>'+fmtSci(m.betweenness[i])+' · #'+rankOf(m.betweenness,i)+'</td></tr><tr><td>PageRank</td><td>'+fmtSci(m.pagerank[i])+' · #'+rankOf(m.pagerank,i)+'</td></tr>'+
+    '<tr><td>Sentimen ditulis</td><td style="color:'+sentColor(se.outMean[i])+'">'+fmtS(se.outMean[i])+' · n '+se.outN[i]+'</td></tr><tr><td>Sentimen diterima</td><td style="color:'+sentColor(se.inMean[i])+'">'+fmtS(se.inMean[i])+' · n '+se.inN[i]+'</td></tr><tr><td>Negatif diterima</td><td>'+se.inNeg[i]+'</td></tr></table>'+
+    (ins.length?'<div class="nb">'+verb[0]+' ('+ins.length+'):<br>'+chips(ins,'s')+'</div>':'')+(outs.length?'<div class="nb">'+verb[1]+' ('+outs.length+'):<br>'+chips(outs,'t')+'</div>':'');
+  dd.style.display='block';dd.querySelector('.x').onclick=function(){select(null);};
+  dd.querySelectorAll('.nb span[data-i]').forEach(function(s){s.onclick=function(){focusNode(+s.dataset.i);};});
+  draw();
+}
+function focusNode(i){
+  var n=view.nodes.find(function(x){return x.id===i;});
+  if(!n){$('nShow').value=$('nShow').max;$('nShowV').textContent=fmt(+$('nShow').max)+' / '+fmt(cur().g.n);buildView();setTimeout(function(){focusNode(i);},1200);return;}
+  select(n);var r=$('gwrap').getBoundingClientRect(),k=Math.max(view.transform.k,1.4);
+  cvSel.transition().duration(600).call(zoom.transform,d3.zoomIdentity.translate(r.width/2-n.x*k,r.height/2-n.y*k).scale(k));
+}
+function fit(){
+  if(!view.nodes.length)return;var x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+  view.nodes.forEach(function(n){x0=Math.min(x0,n.x-n.r);y0=Math.min(y0,n.y-n.r);x1=Math.max(x1,n.x+n.r);y1=Math.max(y1,n.y+n.r);});
+  var r=$('gwrap').getBoundingClientRect();if(!r.width){setTimeout(fit,300);return;}var pad=40,k=Math.min(1.8,Math.min((r.width-2*pad)/(x1-x0||1),(r.height-2*pad)/(y1-y0||1)));
+  cvSel.transition().duration(500).call(zoom.transform,d3.zoomIdentity.translate(r.width/2-(x0+x1)/2*k,r.height/2-(y0+y1)/2*k).scale(k));
+}
+
+/* ---------- exports ---------- */
+var CRC=(function(){var t=new Uint32Array(256);for(var n=0;n<256;n++){var c=n;for(var k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0;}return t;})();
+function crc32(b){var c=0xFFFFFFFF;for(var i=0;i<b.length;i++)c=CRC[(c^b[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0;}
+function zip(files){
+  var enc=new TextEncoder(),parts=[],central=[],off=0,d=new Date();
+  var dt=((d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1))&0xFFFF,dd=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+  files.forEach(function(f){
+    var name=enc.encode(f.name),data=typeof f.data==='string'?enc.encode(f.data):f.data,crc=crc32(data),h=new DataView(new ArrayBuffer(30));
+    h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,dt,true);h.setUint16(12,dd,true);h.setUint32(14,crc,true);h.setUint32(18,data.length,true);h.setUint32(22,data.length,true);h.setUint16(26,name.length,true);
+    parts.push(new Uint8Array(h.buffer),name,data);
+    var c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(12,dt,true);c.setUint16(14,dd,true);c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);c.setUint16(28,name.length,true);c.setUint32(42,off,true);
+    central.push(new Uint8Array(c.buffer),name);off+=30+name.length+data.length;
+  });
+  var csize=central.reduce(function(s,p){return s+p.length;},0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,csize,true);e.setUint32(16,off,true);
+  return new Blob(parts.concat(central,[new Uint8Array(e.buffer)]),{type:'application/zip'});
+}
+function anchorDownload(name,data,mime){var blob=data instanceof Blob?data:new Blob([data],{type:mime||'application/octet-stream'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},2000);}
+function save(name,data,mime){
+  if(downloads){
+    return downloads.save({filename:name,data:data}).then(function(r){if(r.status==='saved')toast('Tersimpan: '+name);}).catch(function(e){var c=e&&e.code;
+      if(c==='declined')toast('Unduhan dibatalkan.');else if(c==='rate_limited')toast('Masih ada dialog unduhan terbuka, coba lagi sebentar.');else toast('Unduhan tidak tersedia di tampilan ini ('+(c||'error')+').',5000);});
+  }
+  anchorDownload(name,data,mime);return Promise.resolve();
+}
+function fileBase(){return (state.fileName||'data').replace(/\.[^.]+$/,'').replace(/[^\w\-]+/g,'_');}
+function slug(s){return String(s).toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');}
+function gexfFor(p,net){
+  var d=state.all.res[p][net],g=d.g,m=d.m,maxPr=Math.max.apply(null,m.pagerank.concat([1e-12]));
+  var posMap=new Map();if(view.key===p+'|'+net)view.nodes.forEach(function(n){posMap.set(n.id,[n.x,n.y]);});
+  var o=state.opts,range=(o.from||o.to)?' | filter '+(o.from?isoDay(o.from):'…')+' s.d. '+(o.to?isoDay(o.to):'…'):'';
+  return SNA.toGEXF(g,m,pName(p)+' - jaringan '+netName(p,net)+' ('+(net==='like'?'penyuka -> pemilik postingan':net==='mention'?'penulis -> @akun yang disebut':net==='cooc'?'co-occurrence tak berarah, disimpan dua arah':net==='quote'?'sumber -> yang dikutip/disebut':'author -> target_user')+', bobot = jumlah interaksi) dari '+(state.fileName||'data')+range+' | sentimen: '+srcName()+' (min n aktor '+state.sent.minN+')'+(state.isDemo?' | DATA SINTETIS':'')+' | Louvain seed '+o.seed+', resolusi '+o.resolution+', Q='+m.modularity.toFixed(4),{
+    types:g.labels.map(nodeType),labels:g.labels.map(function(l){return isEnt(l)?dispLabel(l):l;}),
+    colors:g.labels.map(function(_,i){return hexRgb(commColor(m.community[i]));}),sizes:g.labels.map(function(_,i){return 4+36*Math.sqrt(m.pagerank[i]/maxPr);}),pos:g.labels.map(function(_,i){return posMap.get(i)||[NaN,NaN];})});
+}
+function gexfName(p,net){return fileBase()+'_'+slug(pName(p))+'_'+slug(netName(p,net))+'.gexf';}
+$('exGexf').onclick=function(){
+  if(state.plat==='all'){
+    var files=[];state.all.platforms.forEach(function(p){netsOf(p).forEach(function(net){if(state.all.res[p][net]&&state.all.res[p][net].g.n)files.push({name:gexfName(p,net),data:gexfFor(p,net)});});});
+    if(!files.length){toast('Tidak ada jaringan untuk diekspor.');return;}
+    save(fileBase()+'_semua_platform_gexf.zip',zip(files));return;
+  }
+  var name=gexfName(state.plat,state.net),txt=gexfFor(state.plat,state.net);
+  if(downloads) save(name.replace(/\.gexf$/,'_gexf.zip'),zip([{name:name,data:txt}]));else save(name,txt,'application/gexf+xml');
+};
+$('cpGexf').onclick=function(){
+  if(state.plat==='all')return;var txt=gexfFor(state.plat,state.net);
+  function fb(){var ta=document.createElement('textarea');ta.value=txt;document.body.appendChild(ta);ta.select();var ok=false;try{ok=document.execCommand('copy');}catch(e){}ta.remove();toast(ok?'GEXF disalin. Tempel ke file teks berekstensi .gexf.':'Gagal menyalin.');}
+  if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(txt).then(function(){toast('GEXF disalin ('+fmt(txt.length)+' karakter). Simpan sebagai .gexf.');},fb);else fb();
+};
+function csvCell(v){if(v==null)return '';v=String(v);return /[",\n;\r]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+$('exCsv').onclick=function(){
+  var plats=state.plat==='all'?state.all.platforms:[state.plat];
+  var L=['platform,network,node,node_type,in_degree,out_degree,in_degree_weighted,out_degree_weighted,betweenness,pagerank,community,sentiment_written_mean,sentiment_written_n,sentiment_received_mean,sentiment_received_n,negative_received_n'];
+  plats.forEach(function(p){netsOf(p).forEach(function(net){var d=state.all.res[p][net];if(!d)return;var g=d.g,m=d.m,se=m.sent;
+    g.labels.forEach(function(u,i){L.push([csvCell(pName(p)),csvCell(netName(p,net)),csvCell(isEnt(u)?dispLabel(u):u),ECAT[nodeType(u)].name,m.inC[i],m.outC[i],m.inW[i],m.outW[i],m.betweenness[i],m.pagerank[i],m.community[i],se.outMean[i]==null?'':se.outMean[i],se.outN[i],se.inMean[i]==null?'':se.inMean[i],se.inN[i],se.inNeg[i]].join(','));});});});
+  save(fileBase()+'_'+(state.plat==='all'?'semua_platform':slug(pName(state.plat)))+'_metrik.csv','﻿'+L.join('\n'),'text/csv');
+};
+$('exSent').onclick=function(){
+  var L=['platform,type,author,target_user,created_at,text,sentiment_source,sentiment_score,sentiment_label,lexicon_score,lexicon_label,ai_label,ai_sarcasm,manual_label'];
+  state.records.forEach(function(r){if(!inScope(r))return;if(!inWindow(r))return;if(state.plat!=='all'&&r.p!==state.plat)return;
+    L.push([csvCell(pName(r.p)),r.type,csvCell(r.a),csvCell(r.t),isNaN(r.ts)?'':new Date(r.ts).toISOString(),csvCell(r.text),srcName(),r.s==null?'':r.s.toFixed(4),r.lab||'',r.lxs==null||!r.lx?'':r.lxs.toFixed(4),r.lx||'',r.ai?r.ai.s:'',r.ai?r.ai.sar:'',r.man||''].join(','));});
+  save(fileBase()+'_'+(state.plat==='all'?'semua_platform':slug(pName(state.plat)))+'_sentimen.csv','﻿'+L.join('\n'),'text/csv');
+};
+$('tpl').onclick=function(){
+  var t='author,text,type,target_user,created_at,platform,sentiment\n'+
+    'akun_a,"Kebijakan baru ini perlu dikaji, setuju?",tweet,,2026-10-01 08:15:00,X,\n'+
+    'akun_b,"RT @akun_a: Kebijakan baru ini perlu dikaji",retweet,akun_a,2026-10-01 08:20:00,X,\n'+
+    'akun_c,"@akun_a Setuju, terutama soal anggaran",reply,akun_a,2026-10-01 09:02:00,X,positif\n'+
+    'akun_e,"Videonya informatif, mantap",comment,akun_a,2026-10-01 10:30:00,TikTok,positif\n'+
+    'akun_f,"",share,akun_a,2026-10-01 11:00:00,Facebook,\n'+
+    'akun_k,"",like,akun_a,2026-10-01 11:05:00,Instagram,\n'+
+    'akun_n,"Ini penting dibaca #pemilu",quote,akun_a,2026-10-01 11:20:00,X,positif\n'+
+    'akun_m,"",like,akun_a,2026-10-01 11:07:00,X,\n'+
+    'akun_g,"Narasumbernya tidak netral",comment,kanal_berita,2026-10-02 07:45:00,YouTube,negatif\n'+
+    'akun_h,"Artikel ini bias dan menyesatkan",comment,portal_x,2026-10-02 08:10:00,Media Online,negatif\n';
+  save('template_sna.csv',t,'text/csv');
+};
+
+/*__FEAT__*/
+/*__PDF__*/
+
+/* ---------- demo data ---------- */
+function demo(){
+  var rng=SNA.mulberry32(2026);
+  var pre=['suara','kabar','warga','ruang','info','forum','pemuda','netizen','media','bincang','jejak','opini'];
+  var suf=['rakyat','kita','nusantara','publik','kota','muda','digital','indo','harian','bebas','id','update'];
+  var users=[],used=new Set();
+  while(users.length<260){var u=pre[Math.floor(rng()*pre.length)]+(rng()<.5?'_':'')+suf[Math.floor(rng()*suf.length)]+(rng()<.5?Math.floor(rng()*99):'');if(!used.has(u)){used.add(u);users.push(u);}}
+  var POSC=['Mantap, programnya sangat bermanfaat','Setuju banget, semoga sukses','Keren, terima kasih infonya','Alhamdulillah akhirnya ada solusi 🙏','Bagus sekali penjelasannya','Salut dengan langkah ini','Semangat terus, kami dukung!','Informatif dan jelas, makasih','Luar biasa kerjanya 👍','Ini baru namanya peduli rakyat'];
+  var NEGC=['Ini cuma pencitraan','Kecewa berat dengan kebijakan ini','Hoax, jangan percaya','Pembohong, janji tidak ditepati','Parah, makin mahal saja','Tidak adil buat rakyat kecil','Kebijakan ngawur dan merugikan','Korupsi terus, muak','Bagus di awal tapi pelaksanaannya kacau','Dasar munafik 😡'];
+  var NEUC=['Kapan mulai berlaku?','Sumbernya dari mana ya?','Ini di daerah mana?','Saya baru tahu soal ini','Menunggu penjelasan resmi','Ada link lengkapnya?','Hari ini ramai dibahas','Coba cek di situs resmi'];
+  var PDEF=[['X',.28,.30,.45],['TikTok',.2,.55,.2],['Instagram',.14,.5,.2],['YouTube',.12,.35,.35],['Facebook',.11,.4,.35],['Threads',.05,.4,.3],['Media Online',.1,.25,.45]];
+  var rows=['author,text,type,target_user,created_at,platform'];
+  var start=new Date('2026-10-01T00:00:00').getTime();
+  PDEF.forEach(function(pd){
+    var N=Math.round(5600*pd[1]),pu=users.slice().sort(function(){return rng()-.5;}).slice(0,Math.round(60+140*pd[1]/.28));
+    var gs=[pu.slice(0,Math.floor(pu.length*.45)),pu.slice(Math.floor(pu.length*.45),Math.floor(pu.length*.75)),pu.slice(Math.floor(pu.length*.75))];
+    for(var k=0;k<N;k++){
+      var gi=rng()<.5?0:rng()<.6?1:2,G=gs[gi];if(!G.length)continue;
+      var a=G[Math.floor(rng()*G.length)],r=rng(),type=r<.14?'tweet':r<.40?(pd[0]==='X'?'retweet':'share'):r<.68||pd[0]==='Media Online'?(pd[0]==='X'||pd[0]==='Threads'?'reply':'comment'):'like',t='';
+      if((type==='retweet'||type==='share')&&['X','Threads','Facebook'].indexOf(pd[0])>=0&&rng()<.3)type='quote';
+      if(type!=='tweet'){if(rng()<.06)t=pu[Math.floor(rng()*pu.length)];else{var hubs=G.slice(0,type==='like'?10:6);t=rng()<.62?hubs[Math.floor(Math.pow(rng(),1.8)*hubs.length)]:G[Math.floor(rng()*G.length)];}}
+      var pneg=pd[3]*(gi===2?1.5:gi===0?0.8:1),pp=pd[2]*(gi===2?0.6:1),x=rng();
+      var text=type==='comment'||type==='reply'||type==='quote'?(x<pp?POSC:x<pp+pneg?NEGC:NEUC):(type==='tweet'?NEUC:['']);if(type==='like')text=[''];
+      text=text[Math.floor(rng()*text.length)];
+      if(text){var ORGS=['KPU','Bawaslu','DPR','MK'],LOCS=['Jakarta','Bandung','Surabaya','Medan','Makassar'],TAGS=['#pemilu2029','#bansos','#hargabbm','#kawalpemilu','#dprri'];
+        if(rng()<.3)text=ORGS[Math.floor(rng()*ORGS.length)]+' '+text.charAt(0).toLowerCase()+text.slice(1);
+        if(rng()<.22)text+=' di '+LOCS[Math.floor(rng()*LOCS.length)];
+        if(rng()<.08)text+=' dekat '+(rng()<.5?'gedung DPR':'Monas');
+        if(rng()<.18)text+=' cc @'+pu[Math.floor(Math.pow(rng(),2)*pu.length)];
+        if(rng()<.35)text+=' '+TAGS[Math.floor(Math.pow(rng(),1.5)*TAGS.length)];if(rng()<.14)text+=' '+TAGS[Math.floor(rng()*TAGS.length)];}
+      var ts=new Date(start+Math.floor(rng()*30*864e5));
+      var dstr=ts.getFullYear()+'-'+String(ts.getMonth()+1).padStart(2,'0')+'-'+String(ts.getDate()).padStart(2,'0')+' '+String(ts.getHours()).padStart(2,'0')+':'+String(ts.getMinutes()).padStart(2,'0')+':00';
+      rows.push([a,'"'+text.replace(/"/g,'""')+'"',type,t,dstr,pd[0]].join(','));
+    }
+  });
+  loadText._demo=true;loadText._demoDict=true;loadText(rows.join('\n'),'data_contoh.csv');
+}
+
+/* ---------- wiring ---------- */
+var drop=$('drop'),file=$('file');
+drop.onclick=function(){file.click();};
+drop.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();file.click();}};
+file.onchange=function(){if(file.files[0])readFile(file.files[0]);file.value='';};
+['dragenter','dragover'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.add('over');});});
+['dragleave','drop'].forEach(function(ev){drop.addEventListener(ev,function(e){e.preventDefault();drop.classList.remove('over');});});
+drop.addEventListener('drop',function(e){var f=e.dataTransfer.files[0];if(f)readFile(f);});
+function readFile(f){$('gbusy').classList.add('on');$('gbusyMsg').textContent='Membaca '+f.name+'…';var r=new FileReader();r.onload=function(){$('gbusy').classList.remove('on');loadText(r.result,f.name);};r.onerror=function(){$('gbusy').classList.remove('on');toast('Gagal membaca file.');};r.readAsText(f,'utf-8');}
+$('demo').onclick=demo;$('run').onclick=run;
+document.querySelectorAll('.topbar .tab').forEach(function(b){b.onclick=function(){if(b.dataset.net!==state.net)show(b.dataset.net,false);};});
+$('nLabel').oninput=updateLabels;
+var nsT;$('nShow').oninput=function(){var d=cur();if(!d)return;$('nShowV').textContent=fmt(+this.value)+' / '+fmt(d.g.n);clearTimeout(nsT);nsT=setTimeout(buildView,250);};
+$('cMode').onchange=recolor;
+$('pause').onclick=function(){if(state.vos.layout==='vos'){toast('Layout VOS tidak berjalan terus-menerus; pakai “Susun ulang layout”.');return;}if(!view.sim)return;view.paused=!view.paused;if(view.paused){view.sim.stop();this.textContent='Lanjutkan layout';}else{view.sim.alpha(0.3).restart();this.textContent='Jeda layout';}};
+$('fit').onclick=fit;
+$('search').addEventListener('change',function(){var d=cur();if(!d)return;var q=SNA.normUser(this.value),g=d.g,i=g.labels.indexOf(q);if(i<0)i=g.labels.findIndex(function(l){return dispLabel(l).toLowerCase()===this.value.trim().toLowerCase();},this);if(i<0)i=g.labels.findIndex(function(l){return dispLabel(l).toLowerCase().indexOf(q)>=0;});if(i>=0)focusNode(i);else toast('Akun “'+this.value+'” tidak ada di jaringan ini.');});
+function resentiment(){if(!state.records){lexInfo0();return;}scoreRecordsAsync().then(function(){lexInfo();updateAiUi();run();});}
+$('minN').onchange=function(){state.sent.minN=Math.max(1,parseInt(this.value,10)||1);this.value=state.sent.minN;if(state.all){recolor();render(true);}};
+$('sSource').onchange=function(){state.sent.source=this.value;resentiment();};
+$('sScope').onchange=function(){state.sent.scope=this.value;resentiment();};
+$('lexUp').onclick=function(){$('lexFile').click();};
+$('lexFile').onchange=function(){var f=this.files[0];if(!f)return;var r=new FileReader();r.onload=function(){var L=SENT.parseLexicon(r.result);if(L.count<10){toast('Leksikon tidak terbaca (butuh kolom kata,bobot).',5000);return;}state.sent.lex=L.lex;state.sent.lexName=f.name;toast('Leksikon dimuat: '+fmt(L.count)+' entri.');testSentence();resentiment();};r.readAsText(f,'utf-8');this.value='';};
+$('lexReset').onclick=function(){state.sent.lex=SENT.BASE;state.sent.lexName=null;testSentence();resentiment();};
+function lexInfo0(){$('lexInfo').innerHTML='Leksikon: <b>'+(state.sent.lexName?esc(state.sent.lexName):'bawaan')+'</b> ('+fmt(SENT.size(state.sent.lex))+' entri).';}
+function testSentence(){
+  var t=$('tText').value;if(!t.trim()){$('tRes').innerHTML='';return;}
+  var q=SENT.score(t,state.sent.lex);
+  $('tRes').innerHTML='<span class="lab '+q.label+'">'+labName(q.label)+' '+fmtS(q.compound)+'</span> '+(q.hits.length?'· '+q.hits.map(function(h){return esc(h[0])+' <span style="color:'+(h[1]>0?POS:NEG)+'">'+(h[1]>0?'+':'')+h[1]+'</span>';}).join(', '):'· tidak ada kata leksikon');
+}
+$('tText').oninput=testSentence;
+$('wUpload').onclick=function(){file.click();};$('wDemo').onclick=demo;
+lexInfo0();renderChips();render();resize();
+setTimeout(function(){if(!state.records)demo();},60);
+})();
+</script>
+</body>
+</html>

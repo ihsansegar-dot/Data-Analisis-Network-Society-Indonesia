@@ -1,0 +1,14 @@
+{
+  "name": "sna-explorer",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SNA Explorer — analisis jaringan sosial & sentimen per platform (Network Society Indonesia)",
+  "scripts": {
+    "build": "node build.js",
+    "verify": "node tests/verify_metrics.js && python3 tests/verify_metrics.py"
+  },
+  "devDependencies": {
+    "d3": "7.8.5",
+    "jspdf": "2.5.1"
+  }
+}
