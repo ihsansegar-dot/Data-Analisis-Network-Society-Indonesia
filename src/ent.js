@@ -111,8 +111,8 @@ function entApply(){
       if(r.text){var lt=r.text.toLowerCase();if(ents.length)matchText(lt,ents,set);}
       if(r.ext){for(var k in r.ext){var v=r.ext[k];
         if(k==='hashtag'){v.split(/[\s,;]+/).forEach(function(t){t=normTag(t);if(t.length<2)return;var kk='hashtag|'+t;set.add(kk);if(!meta.has(kk))meta.set(kk,{cat:'hashtag',label:t,src:'kolom'});});}
-        else{var before=set.size,lv=v.toLowerCase();if(byCat[k])matchText(lv,byCat[k],set);
-          if(set.size===before){var kk2=k+'|'+lv.replace(/\s+/g,' ').slice(0,80);set.add(kk2);if(!meta.has(kk2))meta.set(kk2,{cat:k,label:v.replace(/\s+/g,' ').slice(0,80),src:'kolom'});}}}}
+        else{v.split(/\s*[;|]\s*/).forEach(function(v){v=v.trim();if(!v)return;var before=set.size,lv=v.toLowerCase();if(byCat[k])matchText(lv,byCat[k],set);
+          if(set.size===before){var kk2=k+'|'+lv.replace(/\s+/g,' ').slice(0,80);set.add(kk2);if(!meta.has(kk2))meta.set(kk2,{cat:k,label:v.replace(/\s+/g,' ').slice(0,80),src:'kolom'});}});}}}
       r.ents=set.size?Array.from(set):null;}
     $('gbusyMsg').textContent='Mencocokkan entitas '+fmt(i)+' / '+fmt(N)+'…';
     if(i<N)setTimeout(step,0);else{state.ent.list=ents;state.ent.meta=meta;state.ent.ready=true;$('gbusy').classList.remove('on');entInfo();res();}})();});

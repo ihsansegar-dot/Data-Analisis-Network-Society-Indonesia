@@ -81,6 +81,8 @@ var SNA = (function () {
     var EXT = { org: ['organisasi', 'organization', 'organisation', 'org'], loc: ['lokasi', 'location', 'user_location', 'kota', 'provinsi'], place: ['place', 'tempat', 'place_name', 'place_full_name'], term: ['term', 'keyword', 'kata_kunci', 'query'], hashtag: ['hashtag', 'hashtags', 'tagar'], atype: ['author_type', 'account_type', 'node_type', 'tipe_akun', 'jenis_akun', 'tipe_node'] };
     var extIdx = {}, extCols = {};
     Object.keys(EXT).forEach(function (k) { EXT[k].some(function (h) { var i = header.indexOf(h); if (i >= 0) { extIdx[k] = i; extCols[k] = h; return true; } return false; }); });
+    var uIdx = -1;
+    ['url', 'link', 'tautan', 'permalink'].some(function (k) { uIdx = header.indexOf(k); return uIdx >= 0; });
     var sIdx = -1;
     ['sentiment', 'sentimen', 'label_sentimen', 'sentiment_label', 'label'].some(function (k) { sIdx = header.indexOf(k); return sIdx >= 0; });
     var rep = { extCols: extCols, hasManual: sIdx >= 0, manualCol: sIdx >= 0 ? header[sIdx] : null, rows: rows.length - 1, byType: {}, unknownType: 0, noAuthor: 0, noTarget: 0, badDate: 0, missingCols: need.filter(function (k) { return idx[k] < 0; }), hasPlatform: pIdx >= 0, platformCol: pIdx >= 0 ? header[pIdx] : null, rawPlatformsUnknown: {} };
@@ -116,7 +118,9 @@ var SNA = (function () {
       if (sIdx >= 0 && typeof SENT !== 'undefined') man = SENT.normLabel(row[sIdx]);
       var ext = null;
       for (var ek in extIdx) { var ev = String(row[extIdx[ek]] || '').trim(); if (ev) { if (!ext) ext = {}; ext[ek] = ev; } }
-      recs.push({ a: a, t: t, type: type, ts: ts, p: p, text: idx.text >= 0 ? String(row[idx.text] || '') : '', man: man, ext: ext });
+      var rec = { a: a, t: t, type: type, ts: ts, p: p, text: idx.text >= 0 ? String(row[idx.text] || '') : '', man: man, ext: ext };
+      if (uIdx >= 0) { var uv = String(row[uIdx] || '').trim(); if (/^https?:\/\//i.test(uv)) rec.url = uv; }
+      recs.push(rec);
     }
     return { records: recs, report: rep };
   }

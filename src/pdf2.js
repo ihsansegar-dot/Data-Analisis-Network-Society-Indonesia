@@ -168,6 +168,16 @@ function buildPDF(scope){
         font(7,'normal',MUT);T(meta,M+3,y+3);font(8.3,'normal');ls.forEach(function(l,ix){T(l,M+3,y+7+ix*3.8);});y+=hh+1;});
       y+=2;});
   });
+  // kategori (kolom term)
+  (function(){if(typeof katData!=='function')return;var KD=katData(scope==='active'&&state.plat!=='all'?state.plat:'all');if(!KD.recs.length)return;
+    h2('Kategori (kolom term) - '+fmt(KD.recs.length)+' teks berkategori, '+fmt(KD.media.length)+' media/akun');
+    need(rh*2);doc.setFillColor.apply(doc,FILL);doc.rect(M,y,CW,rh,'F');font(7,'bold',MUT);T('Kategori',M+1.5,y+3.6);T('Teks',M+78,y+3.6,{align:'right'});T('%',M+92,y+3.6,{align:'right'});T('Media/akun teratas',M+96,y+3.6);y+=rh;
+    var mx=KD.cats.length?KD.cats[0][1]:1;
+    KD.cats.forEach(function(c,i){need(rh);font(7.8,'normal');T(trunc(c[0],50),M+1.5,y+3.6);rgbFill(katColor(i));doc.rect(M+52,y+1.4,14*c[1]/mx,2.6,'F');
+      T(fmt(c[1]),M+78,y+3.6,{align:'right'});T(fmt(100*c[1]/KD.recs.length,1),M+92,y+3.6,{align:'right'});
+      var tops=KD.media.map(function(m){return [m[0],KD.cell.get(c[0]+'\u0001'+m[0])||0];}).filter(function(x){return x[1];}).sort(function(a,b){return b[1]-a[1];}).slice(0,3).map(function(x){return dispLabel(x[0])+' '+x[1];}).join(', ');
+      font(7.3,'normal',MUT);T(trunc(tops,CW-97),M+96,y+3.6);y+=rh;hline(M,M+CW);});
+    para('Multi-label: satu teks dapat masuk beberapa kategori; persentase dihitung terhadap teks berkategori dan tidak dijumlahkan menjadi 100%. Jumlah per media dipengaruhi volume media tersebut. Bila kategori berasal dari klasifikasi otomatis berbasis kamus, angka ini belum tervalidasi terhadap pengodean manual.',7.5);y+=3;})();
   doc.addPage();y=M;h2('Catatan metode');
   ['Analisis per platform: setiap platform memiliki jaringan sendiri; akun bernama sama di dua platform diperlakukan sebagai node berbeda. Jaringan share dinamai sesuai istilah platform (Retweet di X, Repost di Threads, Share/Repost di TikTok dan Instagram, Share di Facebook, YouTube, Media Online) dan tidak pernah digabung antar-platform.',
    'Jaringan like (semua platform kecuali Media Online): edge penyuka -> pemilik postingan; hanya dapat dibentuk bila data mencatat akun yang menyukai, bukan sekadar jumlah like.',

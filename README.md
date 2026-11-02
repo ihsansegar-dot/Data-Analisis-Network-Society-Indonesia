@@ -83,6 +83,18 @@ Belum ditentukan oleh pemilik repositori.
 
 Dikembangkan untuk **Network Society Indonesia**.
 
+### Panel Kategori
+
+Bila CSV memiliki kolom `term`/`keyword` (misalnya `sna_explorer.csv` dari news scraper), muncul panel
+**Kategori** dengan isi berikut:
+- jumlah teks per kategori;
+- tren harian;
+- matriks kategori × media, dalam jumlah atau % per media;
+- daftar teks dengan tautan ke artikel (kolom `url`);
+- unduhan CSV.
+
+Ringkasan kategori juga masuk ke laporan PDF. Nilai ganda dipisah `;` atau `|` dan dihitung sebagai multi-label.
+
 ## News Scraper (folder `scraper/`)
 
 Scraper berita online Indonesia berbasis Scrapling dengan identifikasi 11 kategori keislaman dan politik
