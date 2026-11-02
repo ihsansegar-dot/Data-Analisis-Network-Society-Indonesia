@@ -36,13 +36,15 @@ rem --- parameter ---
 echo.
 echo Kosongkan lalu tekan Enter untuk memakai nilai bawaan.
 set "SINCE="
-set /p SINCE=Tanggal mulai  (YYYY-MM-DD, bawaan 7 hari terakhir): 
+set /p SINCE=Tanggal mulai  (mis. 2026-10-01, bawaan 7 hari terakhir): 
 set "UNTIL="
-set /p UNTIL=Tanggal akhir  (YYYY-MM-DD, bawaan hari ini): 
+set /p UNTIL=Tanggal akhir  (mis. 2026-10-31, bawaan hari ini): 
 set "SOURCES="
 set /p SOURCES=Media (domain dipisah koma, bawaan semua 33 media): 
+if defined SOURCES set "SOURCES=%SOURCES: =%"
 set "MAXN=50"
 set /p MAXN=Maks. artikel per media (bawaan 50): 
+if not defined MAXN set "MAXN=50"
 
 set "ARGS=--max-per-source %MAXN% --out output"
 if defined SINCE set "ARGS=%ARGS% --since %SINCE%"
@@ -54,7 +56,21 @@ echo Menjalankan: python run.py %ARGS%
 echo (log lengkap juga disimpan di output\log.txt)
 echo.
 "%VPY%" run.py %ARGS%
+set "RC=%ERRORLEVEL%"
 echo.
-echo Selesai. Hasil di folder output\ : articles.csv, kategori_ringkasan.csv, sna_explorer.csv, log.txt
+if not "%RC%"=="0" (
+  echo ============================================================
+  echo  Program berhenti dengan error. Baca pesan di atas,
+  echo  lalu kirim file ini ke Claude:
+  echo    %~dp0output\log.txt
+  echo ============================================================
+  start "" "%~dp0output"
+  pause & exit /b %RC%
+)
+echo ============================================================
+echo  Selesai. File untuk SNA Explorer:
+echo    %~dp0output\sna_explorer.csv
+echo  File lain di folder yang sama: articles.csv, kategori_ringkasan.csv, log.txt
+echo ============================================================
 start "" "%~dp0output"
 pause

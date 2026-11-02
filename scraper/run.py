@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import logging
 import os
+import re
 import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timedelta, timezone
@@ -25,6 +26,24 @@ from scraper.extract import extract
 from scraper.fetch import PoliteFetcher, base_url
 
 log = logging.getLogger("run")
+WIB = timezone(timedelta(hours=7))
+
+
+def user_date(s: str) -> datetime:
+    """Terima YYYY-MM-DD, YYYY-M-D, DD-MM-YYYY, DD/MM/YYYY (tanggal dianggap WIB)."""
+    s = (s or "").strip()
+    m = re.fullmatch(r"(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})", s)
+    if m:
+        y, mo, d = int(m[1]), int(m[2]), int(m[3])
+    else:
+        m = re.fullmatch(r"(\d{1,2})[-/.](\d{1,2})[-/.](\d{4})", s)
+        if not m:
+            raise argparse.ArgumentTypeError(f"format tanggal tidak dikenali: '{s}' (pakai YYYY-MM-DD, mis. 2026-10-01)")
+        d, mo, y = int(m[1]), int(m[2]), int(m[3])
+    try:
+        return datetime(y, mo, d, tzinfo=WIB)
+    except ValueError as e:
+        raise argparse.ArgumentTypeError(f"tanggal tidak valid: '{s}' ({e})")
 
 
 def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFetcher):
@@ -96,8 +115,8 @@ def main(argv=None):
     ap.add_argument("--categories", default="config/categories.yaml")
     ap.add_argument("--sources", help="daftar domain dipisah koma (default: semua di sources.yaml)")
     ap.add_argument("--group", help="hanya grup tertentu: nasional / daerah / islam")
-    ap.add_argument("--since", help="YYYY-MM-DD (default: 7 hari terakhir)")
-    ap.add_argument("--until", help="YYYY-MM-DD (inklusif)")
+    ap.add_argument("--since", type=user_date, help="YYYY-MM-DD (default: 7 hari terakhir)")
+    ap.add_argument("--until", type=user_date, help="YYYY-MM-DD (inklusif)")
     ap.add_argument("--max-per-source", type=int, default=None)
     ap.add_argument("--delay", type=float, default=None, help="jeda antar-permintaan per domain (detik)")
     ap.add_argument("--workers", type=int, default=6, help="jumlah domain yang diproses paralel")
@@ -131,11 +150,15 @@ def main(argv=None):
     if args.group:
         srcs = [s for s in srcs if s.get("group") == args.group]
     if not srcs:
-        sys.exit("Tidak ada sumber yang cocok.")
+        log.error("Tidak ada sumber yang cocok dengan --sources/--group.")
+        sys.exit(2)
 
-    now = datetime.now(timezone.utc)
-    since = parse_date(args.since) if args.since else now - timedelta(days=7)
-    until = (parse_date(args.until) + timedelta(days=1) - timedelta(seconds=1)) if args.until else now
+    now = datetime.now(WIB)
+    since = args.since or now - timedelta(days=7)
+    until = (args.until + timedelta(days=1) - timedelta(seconds=1)) if args.until else now
+    if since > until:
+        log.error("Tanggal mulai (%s) setelah tanggal akhir (%s).", since.date(), until.date())
+        sys.exit(2)
 
     clf = CategoryClassifier(args.categories)
     store = Store(args.out, clf)
@@ -156,4 +179,13 @@ def main(argv=None):
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit:
+        raise
+    except KeyboardInterrupt:
+        log.warning("Dihentikan pengguna. Artikel yang sudah tersimpan tetap ada; jalankan lagi untuk melanjutkan.")
+        sys.exit(130)
+    except Exception:  # noqa: BLE001
+        log.exception("Program berhenti karena error. Kirim file output/log.txt untuk diperiksa.")
+        sys.exit(1)
