@@ -35,6 +35,40 @@ def load_cats(path):
         float(cfg.get("min_score", 3))
 
 
+PANDUAN = """# Panduan pengodean manual ({n} artikel)
+
+**Status: DRAF.** Definisi di bawah disusun sebagai titik awal dan harus disepakati/direvisi oleh tim peneliti
+sebelum pengodean dimulai. Jangan mengubah definisi di tengah pengodean.
+
+## Aturan umum
+1. Dua pengode bekerja **mandiri**: tidak berdiskusi, tidak membuka `kunci_mesin.csv`, tidak melihat panel Kategori di SNA Explorer.
+2. Isi **`k_relevan`**: 1 bila artikel adalah berita/opini yang membahas Islam, umat Islam, ormas/tokoh/partai Islam, atau
+   kebijakan yang bersinggungan dengan urusan keagamaan Islam; 0 bila tidak (mis. hanya menyebut "umat" agama lain,
+   gosip selebriti, iklan, soal ujian). Bila `k_relevan` = 0, isi semua kolom kategori dengan 0.
+3. Isi setiap kolom `k_*` dengan **1** bila kategori itu menjadi **tema substantif** artikel (dibahas, bukan sekadar disebut
+   sekilas atau muncul di nama lembaga), **0** bila tidak. Satu artikel boleh lebih dari satu kategori.
+4. Kolom `teks` dipotong. Bila ragu, buka `url`.
+5. Tulis alasan singkat di `catatan` untuk kasus yang sulit; kasus ini dibahas saat adjudikasi.
+6. Simpan file dalam format CSV. Excel boleh dipakai (pemisah `,` maupun `;` dikenali).
+
+## Definisi operasional kategori (draf)
+"""
+
+DEFINISI = {
+    "identitas_keislaman": "Penanda atau ekspresi identitas Muslim sebagai isu utama: halal sebagai identitas, busana/simbol keagamaan, hijrah, penodaan/penistaan agama, islamofobia, diskriminasi terhadap Muslim. *Bukan*: halal semata sebagai bisnis (→ Ekonomi umat).",
+    "politik_umat": "Umat Islam sebagai blok/aktor politik: aspirasi atau suara umat, pemilih Muslim, mobilisasi massa Islam (mis. 212), ijtima ulama untuk dukungan politik. *Bukan*: partai tertentu (→ Partai Islam).",
+    "moralitas_kepemimpinan_islam": "Penilaian moral atau etika kepemimpinan/kekuasaan dengan rujukan nilai Islam: amanah, adil, zalim, akhlak pemimpin, korupsi dinilai secara moral-keagamaan.",
+    "nasionalisme_religius": "Keterkaitan agama dan kebangsaan: hubbul wathan, resolusi jihad, Hari Santri sebagai momen kebangsaan, NKRI/Pancasila dibingkai nilai agama, santri dan bela negara.",
+    "moderasi_beragama": "Toleransi/intoleransi, radikalisme/ekstremisme/terorisme berlabel agama, kerukunan antarumat, wasathiyah, program moderasi beragama.",
+    "ekonomi_umat": "Ekonomi dan keuangan syariah, zakat-infak-sedekah-wakaf, industri dan ekosistem halal sebagai sektor ekonomi, pengelolaan dana haji, pemberdayaan ekonomi oleh ormas Islam.",
+    "pendidikan_sosial_keagamaan": "Pesantren, madrasah, santri, pendidikan agama Islam, dakwah, majelis taklim, kegiatan sosial/kemanusiaan ormas keagamaan.",
+    "keadilan_sosial": "Ketimpangan, kemiskinan, hak kelompok rentan, ketidakadilan hukum/sosial, yang dibingkai dalam konteks keagamaan atau disuarakan aktor keagamaan.",
+    "politik_kebijakan_publik": "Regulasi, kebijakan, atau keputusan negara yang bersinggungan dengan urusan keagamaan: UU Jaminan Produk Halal, kebijakan dan kasus kuota haji, perda syariah, RUU, kebijakan Kemenag/Kemenhaj.",
+    "representasi_ulama_otoritas": "Ulama, MUI, atau ormas Islam (NU, Muhammadiyah, dll.) tampil sebagai aktor atau otoritas: fatwa, pernyataan sikap, nasihat kepada publik/pemerintah, kepengurusan dan muktamar.",
+    "partai_islam": "Partai berbasis Islam atau massa Islam (PKS, PKB, PPP, PAN, PBB, Partai Ummat, Gelora, Masyumi) atau elitnya sebagai aktor utama artikel.",
+}
+
+
 # ---------------------------------------------------------------- statistik
 def kappa(a, b):
     """Cohen's κ untuk dua vektor biner. None bila tak terdefinisi (kedua pengode konstan & sama)."""
@@ -85,7 +119,7 @@ def cmd_sample(a):
             r = json.loads(ln)
         except ValueError:
             continue
-        if r["url"] not in seen:
+        if r["url"] not in seen and r.get("jenis", "berita") == "berita":
             seen.add(r["url"])
             recs.append(r)
     if not recs:
@@ -107,14 +141,14 @@ def cmd_sample(a):
     pick = pick[:n]
     rng.shuffle(pick)  # acak urutan agar pengode tak bisa menebak strata
     os.makedirs(a.out, exist_ok=True)
-    head = ["id", "media", "published", "title", "url", "teks"] + [f"k_{c}" for c in cats] + ["catatan"]
+    head = ["id", "media", "published", "title", "url", "teks", "k_relevan"] + [f"k_{c}" for c in cats] + ["catatan"]
     for i in (1, 2):
         with open(os.path.join(a.out, f"lembar_kode_pengode{i}.csv"), "w", newline="", encoding="utf-8-sig") as f:
             w = csv.writer(f)
             w.writerow(head)
             for j, r in enumerate(pick, 1):
                 teks = (r.get("body") or r.get("description") or "")[: a.chars]
-                w.writerow([f"A{j:04d}", r["media"], r.get("published", ""), r["title"], r["url"], teks]
+                w.writerow([f"A{j:04d}", r["media"], r.get("published", "")[:10], r["title"], r["url"], teks, ""]
                            + [""] * len(cats) + [""])
     with open(os.path.join(a.out, "kunci_mesin.csv"), "w", newline="", encoding="utf-8-sig") as f:
         w = csv.writer(f)
@@ -124,18 +158,24 @@ def cmd_sample(a):
             w.writerow([f"A{j:04d}", r["url"], r.get("primary") or ""] + [int(c in lab) for c in cats]
                        + [r.get("scores", {}).get(c, 0) for c in cats])
     with open(os.path.join(a.out, "panduan_kode.md"), "w", encoding="utf-8") as f:
-        f.write("# Panduan pengodean\n\nIsi setiap kolom `k_*` dengan **1** bila artikel secara substansial membahas "
-                "kategori itu, **0** bila tidak. Satu artikel boleh >1 kategori. Kodekan secara mandiri; jangan "
-                "berdiskusi dan jangan membuka `kunci_mesin.csv` sebelum selesai. Teks dipotong; buka URL bila ragu.\n\n")
+        f.write(PANDUAN.format(n=len(pick)))
         for c in cats:
-            f.write(f"- `k_{c}` — {labels[c]}: _(tulis definisi operasional di sini sebelum mulai)_\n")
+            f.write(f"### `k_{c}` — {labels[c]}\n{DEFINISI.get(c, '_(tulis definisi operasional)_')}\n\n")
     print(f"{len(pick)} artikel disampel dari {len(recs)} ({len(strata)} strata) → {a.out}/")
 
 
 # ---------------------------------------------------------------- evaluate
-def read_codes(path, cats):
+def _reader(path):
+    """CSV yang disimpan Excel berbahasa Indonesia memakai pemisah ';'."""
+    txt = open(path, encoding="utf-8-sig").read()
+    first = txt.split("\n", 1)[0]
+    delim = ";" if first.count(";") > first.count(",") else ","
+    return csv.DictReader(txt.splitlines(), delimiter=delim)
+
+
+def read_codes(path, cats, with_rel=False):
     out = {}
-    for row in csv.DictReader(open(path, encoding="utf-8-sig")):
+    for row in _reader(path):
         vals = {}
         for c in cats:
             v = (row.get(f"k_{c}") or "").strip()
@@ -144,6 +184,9 @@ def read_codes(path, cats):
                 break
             vals[c] = v in ("1", "ya", "y", "true", "x")
         if vals is not None:
+            if with_rel:
+                rv = (row.get("k_relevan") or "").strip()
+                vals["_rel"] = None if rv == "" else rv in ("1", "ya", "y", "true", "x")
             out[row["id"]] = vals
     return out
 
@@ -154,7 +197,10 @@ def cmd_evaluate(a):
     c1 = read_codes(os.path.join(d, "lembar_kode_pengode1.csv"), cats)
     p2 = os.path.join(d, "lembar_kode_pengode2.csv")
     c2 = read_codes(p2, cats) if os.path.exists(p2) else {}
-    mach = {r["id"]: r for r in csv.DictReader(open(os.path.join(d, "kunci_mesin.csv"), encoding="utf-8-sig"))}
+    mach = {r["id"]: r for r in _reader(os.path.join(d, "kunci_mesin.csv"))}
+    # presisi gerbang relevansi: semua artikel sampel dinilai relevan oleh mesin
+    rel = read_codes(os.path.join(d, "lembar_kode_pengode1.csv"), cats, with_rel=True)
+    rv = [x["_rel"] for x in rel.values() if x.get("_rel") is not None]
     gold_adj = read_codes(a.gold, cats) if a.gold else {}
     if not c1:
         sys.exit("Lembar pengode 1 belum terisi lengkap (baris dengan kolom k_* kosong diabaikan).")
@@ -208,7 +254,10 @@ def cmd_evaluate(a):
         w = csv.writer(f)
         w.writerow(["id", "kategori", "label", "pengode1", "pengode2"])
         w.writerows(diffs)
-    print(f"Pengode 1: {len(c1)} butir, pengode 2: {len(c2)} butir, keduanya: {len(both)}\n")
+    print(f"Pengode 1: {len(c1)} butir, pengode 2: {len(c2)} butir, keduanya: {len(both)}")
+    if rv:
+        lo, hi = wilson(sum(rv), len(rv))
+        print(f"Presisi gerbang relevansi (pengode 1): {sum(rv)}/{len(rv)} = {sum(rv)/len(rv):.2f} (CI95 {lo:.2f}–{hi:.2f})\n")
     print(f"{'Kategori':<44}{'κ antar':>8}{'P':>7}{'R':>7}{'F1':>7}{'n+':>5}  ambang*")
     for r in rows:
         print(f"{r['label'][:43]:<44}{_s(r['kappa_antar_pengode']):>8}{_s(r['presisi']):>7}{_s(r['recall']):>7}"

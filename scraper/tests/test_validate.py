@@ -70,3 +70,12 @@ def test_sample_and_evaluate_roundtrip():
         if int(r["positif_emas"]) > 0:
             assert float(r["presisi"]) == 1.0 and float(r["recall"]) == 1.0
     assert os.path.getsize(os.path.join(out, "perbedaan_pengode.csv")) > 40
+
+
+def test_semicolon_csv_from_excel(tmp_path):
+    cats, _, _ = V.load_cats(os.path.join(ROOT, "config", "categories.yaml"))
+    p = tmp_path / "x.csv"
+    p.write_text("﻿id;k_relevan;" + ";".join(f"k_{c}" for c in cats) + "\nA0001;1;" + ";".join("1" if i == 0 else "0" for i in range(len(cats))) + "\n",
+                 encoding="utf-8")
+    codes = V.read_codes(str(p), cats, with_rel=True)
+    assert codes["A0001"][cats[0]] is True and codes["A0001"]["_rel"] is True
