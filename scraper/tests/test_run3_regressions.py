@@ -73,3 +73,34 @@ def test_stop_after_consecutive_network_failures():
     for i in range(10):
         f.get(f"https://www.islampos.com/x{i}")
     assert S.n == 3
+
+
+def test_refetch_full_text(tmp_path):
+    import json
+    import threading
+    import run as runmod
+    from scraper.classify import CategoryClassifier
+
+    clf = CategoryClassifier(os.path.join(ROOT, "config", "categories.yaml"))
+    full = ("<html><head><meta property='og:title' content='PKS Bahas Umat'></head><body><article><p>"
+            + "Partai Keadilan Sejahtera PKS dan ulama membahas aspirasi umat Islam menjelang pemilu. " * 30
+            + "</p></article></body></html>")
+
+    class F:
+        def __init__(self, *a, **k): pass
+        def load_robots(self, base): pass
+        def close(self): pass
+        def get(self, url): return Response(url, full.encode(), 200, "OK", {}, {}, {})
+
+    old = {"url": "https://x.id/a/pks-bahas-umat", "domain": "x.id", "media": "X", "title": "PKS Bahas Umat",
+           "body": "Partai Keadilan Sejahtera PKS", "labels": [], "published": "2026-10-10"}
+    orig = runmod.resolve_base
+    runmod.resolve_base = lambda f, d: "https://x.id"
+    try:
+        out = tmp_path / "a.jsonl"
+        args = SimpleNamespace(delay=0, stealth=False, ignore_robots=False)
+        runmod.refetch_domain("x.id", [old], args, clf, str(out), threading.Lock(), fetcher_factory=F)
+    finally:
+        runmod.resolve_base = orig
+    rec = json.loads(out.read_text(encoding="utf-8").strip())
+    assert rec["refetched"] and rec["n_words"] > 300 and "partai_islam" in rec["labels"] and rec["kamus"] == 2

@@ -9,6 +9,8 @@ Contoh:
 from __future__ import annotations
 
 import argparse
+import json
+import threading
 import logging
 import os
 import re
@@ -132,6 +134,40 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
     return stats
 
 
+def refetch_domain(domain, recs, args, clf, out_path, lock, fetcher_factory=PoliteFetcher):
+    """Unduh ulang artikel yang sudah ada (URL dari articles.jsonl lama) untuk mendapatkan teks penuh."""
+    f = fetcher_factory(domain, delay=args.delay, stealth=args.stealth, respect_robots=not args.ignore_robots)
+    ok = fail = 0
+    try:
+        base = resolve_base(f, domain)
+        if base:
+            f.load_robots(base)
+        for old in recs:
+            r = f.get(old["url"]) if base else None
+            rec = dict(old)
+            if r is not None:
+                try:
+                    art = extract(r.body, old["url"])
+                    if art["n_words"] >= max(len((old.get("body") or "").split()), 20):
+                        rec["body"], rec["n_words"] = art["body"], art["n_words"]
+                    ok += 1
+                except Exception as e:  # noqa: BLE001
+                    log.warning("ekstraksi ulang gagal %s: %s", old["url"], e)
+                    fail += 1
+            else:
+                fail += 1
+            res = clf.classify(rec.get("title", ""), rec.get("body", ""))
+            rec.update({"scores": res.scores, "labels": res.labels, "primary": res.primary, "matched": res.matched,
+                        "relevance_hits": res.relevance_hits, "jenis": res.jenis, "kamus": clf.version,
+                        "refetched": r is not None})
+            with lock, open(out_path, "a", encoding="utf-8") as fo:
+                fo.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    finally:
+        f.close()
+    log.info("%s: unduh ulang %d berhasil, %d gagal (teks lama dipakai)", domain, ok, fail)
+    return domain, ok, fail
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--sources-file", default="config/sources.yaml")
@@ -155,6 +191,9 @@ def main(argv=None):
     ap.add_argument("--include-unlabeled", action="store_true", help="sertakan artikel relevan tanpa kategori di sna_explorer.csv")
     ap.add_argument("--ignore-robots", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--out", default="output")
+    ap.add_argument("--refetch", metavar="JSONL", nargs="+",
+                    help="unduh ulang semua URL di articles.jsonl lama untuk teks penuh + klasifikasi ulang; "
+                         "hasil ditulis ke <out>/articles.jsonl (file lama tidak diubah)")
     ap.add_argument("-v", "--verbose", action="store_true")
     args = ap.parse_args(argv)
 
@@ -193,6 +232,32 @@ def main(argv=None):
         sys.exit(2)
 
     clf = CategoryClassifier(args.categories)
+    if args.refetch:
+        os.makedirs(args.out, exist_ok=True)
+        out_path = os.path.join(args.out, "articles.jsonl")
+        done = set()
+        if os.path.exists(out_path):  # lanjutkan bila terhenti
+            done = {json.loads(ln)["url"] for ln in open(out_path, encoding="utf-8") if ln.strip()}
+        by = {}
+        for path in args.refetch:
+            if not os.path.exists(path):
+                log.warning("dilewati (tidak ada): %s", path)
+                continue
+            for ln in open(path, encoding="utf-8"):
+                try:
+                    rec = json.loads(ln)
+                except ValueError:
+                    continue
+                if rec["url"] not in done:
+                    by.setdefault(rec["domain"], {}).setdefault(rec["url"], rec)
+        log.info("unduh ulang %d artikel dari %d domain (%d sudah selesai sebelumnya)",
+                 sum(len(v) for v in by.values()), len(by), len(done))
+        lock = threading.Lock()
+        with ThreadPoolExecutor(max_workers=args.workers) as ex:
+            list(ex.map(lambda kv: refetch_domain(kv[0], list(kv[1].values()), args, clf, out_path, lock), by.items()))
+        paths = Store(args.out, clf).write_tables(include_unlabeled=args.include_unlabeled)
+        print(f"\nSelesai. {paths['n']} artikel di {out_path}")
+        return
     store = Store(args.out, clf)
     log.info("%d sumber, %s s.d. %s", len(srcs), since.date(), until.date())
     allstats = []
