@@ -1,3 +1,5 @@
+# Kamus kategori untuk identifikasi otomatis. version: 2 (revisi Nov 2026, lihat catatan di akhir file)
+version: 2
 # Kamus kategori (codebook awal) untuk identifikasi otomatis.
 # - Semua istilah huruf kecil; dicocokkan per kata/frasa utuh, tidak peka huruf besar/kecil.
 # - Bobot: 3 = sangat khas kategori, 2 = khas, 1 = pendukung (sering muncul di konteks lain).
@@ -34,15 +36,26 @@ ambiguous:
 
 # Judul konten panduan ibadah (doa, niat, tata cara) — bukan berita; tidak diberi kategori dan tidak ikut
 # sna_explorer.csv (kolom jenis di articles.csv). Run 2: banyak di Liputan6 dan Media Indonesia.
+# Pola tambahan (dicari di mana saja dalam judul): kisah/fikih/tips/layanan, bukan berita (revisi v2)
+non_news_title_any:
+  - '^kisah (sahabat|para sahabat|nabi|rasul|para nabi|arab badui|semut|teladan)'
+  - '\bkisah sahabat nabi\b'
+  - '^contoh (khutbah|ceramah|kultum|doa)'
+  - '^\d+ puisi'
+  - '^apakah (shalat|salat|sholat|puasa|wudhu|wudu|haji|umrah|zakat)'
+  - 'hukum [\w -]{2,30} (menurut|dalam) (islam|fikih|fiqih|syariat)'
+  - '^(\d+ )?(cara|tips|rekomendasi|link download|ide) '
+  - '^(\d+ )?(fakta|keutamaan|ayat|makna|arti|hikmah) '
+  - '\boleh-oleh haji\b'
 non_news_title: '^(\d+\s+)?(kumpulan |bacaan |lafal |teks )?(niat|doa|doa-doa|bacaan|amalan|tata cara (shalat|salat|sholat|wudhu|wudu|mandi|tayamum|puasa|zakat)|urutan (shalat|salat|sholat|wudhu|mandi)|keutamaan|khasiat|zikir|dzikir|surat al|surah|kultum|khutbah|hukum (shalat|salat|sholat|puasa|makan|membaca|menikah|nikah|memakai|membakar|menjarah|lupa|mencuri)|bolehkah|jadwal (waktu )?(shalat|salat|sholat|imsakiyah|imsak|puasa|buka puasa|sholat jumat))\b'
 
 categories:
   identitas_keislaman:
     label: Identitas keislaman
     terms:
-      3: [identitas islam, identitas muslim, identitas keislaman, jati diri umat, islamofobia, islamophobia, penistaan agama, penodaan agama, simbol agama, simbol islam, muslim kaffah]
-      2: [hijab, jilbab, busana muslim, hijrah, syariat islam, ukhuwah islamiyah, sertifikasi halal, label halal, gaya hidup halal]
-      1: [syariah, syariat, halal, muslimah, kaffah]
+      3: [identitas islam, identitas muslim, identitas keislaman, jati diri umat, islamofobia, islamophobia, penistaan agama, penodaan agama, simbol agama, simbol islam, muslim kaffah, anti-muslim, anti muslim, kebencian terhadap muslim, merendahkan muslim, diskriminasi terhadap muslim, serangan terhadap muslim, penghina nabi, penghinaan nabi, penghinaan terhadap nabi]
+      2: [hijab, jilbab, busana muslim, hijrah, syariat islam, ukhuwah islamiyah, label halal, gaya hidup halal, mualaf, muallaf]
+      1: [syariah, syariat, halal, muslimah, kaffah, sertifikasi halal]
 
   politik_umat:
     label: Politik umat
@@ -55,15 +68,15 @@ categories:
     label: Moralitas dan kepemimpinan Islam
     terms:
       3: [kepemimpinan islam, pemimpin muslim, pemimpin amanah, akhlakul karimah, teladan rasulullah, uswah hasanah, kepemimpinan profetik]
-      2: [amanah, akhlak, adab, pemimpin adil, zalim, dzalim, khalifah, integritas moral, moralitas]
-      1: [moral, integritas, kejujuran, korupsi]
+      2: [pemimpin adil, zalim, dzalim, khalifah, integritas moral, moralitas, lgbt, lgbtq, asusila, perzinaan, kemaksiatan, maksiat]
+      1: [moral, integritas, kejujuran, korupsi, amanah, akhlak, adab, judi online, miras]
 
   nasionalisme_religius:
     label: Nasionalisme religius
     terms:
-      3: [nasionalisme religius, hubbul wathan, hubbul wathon, hubbul wathon minal iman, resolusi jihad, islam nusantara, hari santri]
+      3: [nasionalisme religius, hubbul wathan, hubbul wathon, hubbul wathon minal iman, resolusi jihad, islam nusantara]
       2: [cinta tanah air, nkri harga mati, bela negara, wawasan kebangsaan, santri dan negara, nasionalis religius]
-      1: [pancasila, kebangsaan, nkri, bhinneka tunggal ika]
+      1: [pancasila, kebangsaan, nkri, bhinneka tunggal ika, hari santri]
 
   moderasi_beragama:
     label: Moderasi beragama
@@ -76,15 +89,15 @@ categories:
     label: Ekonomi umat
     terms:
       3: [ekonomi umat, ekonomi syariah, ekonomi islam, perbankan syariah, keuangan syariah, bank syariah, industri halal, wakaf produktif, fintech syariah, koperasi syariah]
-      2: [zakat, infak, wakaf, baznas, laznas, sukuk, pariwisata halal, dana haji, bpkh, bsi, bank syariah indonesia]
-      1: [sedekah, umkm, halal]
+      2: [zakat, infak, wakaf, baznas, laznas, sukuk, pariwisata halal, dana haji, bpkh, bsi, bank syariah indonesia, amal usaha, kemandirian ekonomi, pasar halal, pasar muslim, negara muslim, saudagar muhammadiyah, pengusaha nu, bisnis muhammadiyah, ekonomi nahdliyin]
+      1: [sedekah, umkm, halal, sertifikasi halal]
 
   pendidikan_sosial_keagamaan:
     label: Pendidikan dan sosial keagamaan
     terms:
       3: [pondok pesantren, pendidikan islam, pendidikan agama islam, madrasah, uu pesantren, majelis taklim, beasiswa santri]
-      2: [pesantren, santri, dakwah, guru ngaji, tpq, pengajian, ormas islam]
-      1: [masjid, musala, kajian, kemenag, kementerian agama]
+      2: [pesantren, santri, dakwah, guru ngaji, tpq, pengajian, ormas islam, perguruan tinggi muhammadiyah, universitas muhammadiyah, ptma, ptnu, sekolah islam, islamic school, dikdasmen, lazismu, lazisnu, nu care, mdmc]
+      1: [masjid, musala, kajian, kemenag, kementerian agama, bantuan kemanusiaan, relawan, tanggap bencana]
 
   keadilan_sosial:
     label: Keadilan sosial
@@ -96,16 +109,16 @@ categories:
   politik_kebijakan_publik:
     label: Politik kebijakan publik
     terms:
-      3: [kebijakan publik, kuota haji, korupsi kuota haji, penyelenggaraan haji, kementerian haji, biaya haji, bpih, perda syariah, uu jaminan produk halal, ruu minuman beralkohol, ruu minol, ruu haluan ideologi pancasila, ruu hip, ruu kuhp, rkuhp]
-      2: [rancangan undang-undang, ruu, undang-undang, peraturan daerah, perda, perpres, peraturan pemerintah, legislasi, regulasi, kebijakan pemerintah, omnibus law]
+      3: [kebijakan publik, wajib halal, wajib sertifikasi halal, penundaan wajib halal, kuota haji, korupsi kuota haji, penyelenggaraan haji, kementerian haji, biaya haji, bpih, perda syariah, uu jaminan produk halal, ruu minuman beralkohol, ruu minol, ruu haluan ideologi pancasila, ruu hip, ruu kuhp, rkuhp]
+      2: [kurikulum, rancangan undang-undang, ruu, undang-undang, peraturan daerah, perda, perpres, peraturan pemerintah, legislasi, regulasi, kebijakan pemerintah, omnibus law]
       1: [dpr, pemilu, pilkada, kpu, bawaslu, kebijakan]
 
   representasi_ulama_otoritas:
     label: Representasi ulama dan otoritas keagamaan
     terms:
       3: [majelis ulama indonesia, fatwa mui, ijtima ulama, bahtsul masail, majelis tarjih, otoritas keagamaan, rais aam, dewan syariah]
-      2: [ulama, mui, fatwa, kiai, kyai, habib, ustaz, ustadz, buya, tuan guru, tokoh agama, pbnu, pp muhammadiyah]
-      1: [ustazah, ulil amri, pimpinan pesantren]
+      2: [ulama, mui, fatwa, kiai, kyai, habib, ustaz, ustadz, buya, tuan guru, tokoh agama, pbnu, pp muhammadiyah, pwnu, pcnu, pwm muhammadiyah, pdm muhammadiyah, tanwir muhammadiyah, muktamar muhammadiyah, muktamar nu, haedar nashir, rais syuriyah, pimpinan pusat muhammadiyah, pengurus besar nahdlatul ulama, pernyataan sikap]
+      1: [ustazah, ulil amri, pimpinan pesantren, muhammadiyah, nahdlatul ulama, aisyiyah, persyarikatan, muktamar, tanwir]
 
   partai_islam:
     label: Partai Islam
@@ -117,3 +130,15 @@ categories:
 # promosi travel haji dan kasus kuota haji ikut berlabel pendidikan; kebijakan haji kini di politik_kebijakan_publik.
 # Catatan ambiguitas: "pbb" sengaja TIDAK dipakai (PBB = Perserikatan Bangsa-Bangsa /
 # Pajak Bumi dan Bangunan / Partai Bulan Bintang). Gunakan "partai bulan bintang".
+
+# Catatan revisi v2 (Nov 2026). Disusun dari 584 artikel run 3 + harian, DI LUAR 199 artikel sampel validasi
+# (agar evaluasi tidak bias). Perubahan:
+# - Diturunkan ke bobot 1 karena terlalu longgar: "hari santri" (20 label hanya karena menyebut tanggal),
+#   "amanah", "akhlak", "adab" (kata kebajikan umum), "sertifikasi halal" di identitas/ekonomi.
+# - Kebijakan wajib halal -> Politik kebijakan publik.
+# - Ditambah: ormas sebagai aktor hanya lewat pimpinan/forum keputusan (PP Muhammadiyah, PWNU, tanwir/muktamar
+#   Muhammadiyah/NU, pernyataan sikap); nama ormas saja = bobot 1 (acara sekolah/amal usaha bukan 'otoritas'), islamofobia dan
+#   penghinaan nabi, mualaf, LGBT/asusila, ekonomi ormas (amal usaha, pengusaha NU), PT/sekolah Islam, lembaga
+#   sosial ormas (LAZISMU, LAZISNU, MDMC), kurikulum.
+# - Penyaring non-berita tambahan (kisah, contoh khutbah, tips, cara, fakta, hukum X menurut Islam).
+# Revisi ini BELUM tervalidasi; bandingkan v1 vs v2 dengan validate.py setelah pengodean manual.

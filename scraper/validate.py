@@ -10,6 +10,10 @@
 2) Setelah pengode selesai:
    python validate.py evaluate --dir validasi [--gold validasi/adjudikasi.csv]
 
+3) Setelah kamus direvisi, bandingkan versi pada sampel yang sama:
+   python validate.py rekey            -> validasi/kunci_mesin_v2.csv
+   python validate.py evaluate --kunci kunci_mesin_v2.csv
+
    → validasi/laporan_validasi.csv  (κ antar-pengode, presisi/recall/F1 mesin, ambang terbaik per kategori)
    → validasi/perbedaan_pengode.csv (butir yang perlu adjudikasi)
 """
@@ -164,6 +168,41 @@ def cmd_sample(a):
     print(f"{len(pick)} artikel disampel dari {len(recs)} ({len(strata)} strata) → {a.out}/")
 
 
+# ---------------------------------------------------------------- rekey
+def cmd_rekey(a):
+    """Hitung ulang label mesin untuk sampel yang SAMA dengan kamus saat ini -> kunci_mesin_v<versi>.csv.
+    Memakai judul + teks tersimpan di articles.jsonl (bisa terpotong pada data lama)."""
+    sys.path.insert(0, HERE)
+    from scraper.classify import CategoryClassifier
+    clf = CategoryClassifier(a.categories)
+    cats = list(clf.cats)
+    by = {}
+    for p in a.inp:
+        for ln in open(p, encoding="utf-8"):
+            try:
+                r = json.loads(ln)
+            except ValueError:
+                continue
+            by.setdefault(r["url"], r)
+    old = list(_reader(os.path.join(a.dir, "kunci_mesin.csv")))
+    out = os.path.join(a.dir, f"kunci_mesin_v{clf.version}.csv")
+    miss = 0
+    with open(out, "w", newline="", encoding="utf-8-sig") as f:
+        w = csv.writer(f)
+        w.writerow(["id", "url", "primary"] + [f"m_{c}" for c in cats] + [f"s_{c}" for c in cats])
+        for row in old:
+            r = by.get(row["url"])
+            if r is None:
+                miss += 1
+                continue
+            x = clf.classify(r.get("title", ""), r.get("body", ""))
+            lab = set(x.labels)
+            w.writerow([row["id"], row["url"], x.primary or ""] + [int(c in lab) for c in cats]
+                       + [x.scores.get(c, 0) for c in cats])
+    print(f"{len(old) - miss} butir dikode ulang dengan kamus v{clf.version} -> {out}" + (f" ({miss} tidak ditemukan)" if miss else ""))
+    print("Bandingkan: python validate.py evaluate --kunci " + os.path.basename(out))
+
+
 # ---------------------------------------------------------------- evaluate
 def _reader(path):
     """CSV yang disimpan Excel berbahasa Indonesia memakai pemisah ';'."""
@@ -197,7 +236,7 @@ def cmd_evaluate(a):
     c1 = read_codes(os.path.join(d, "lembar_kode_pengode1.csv"), cats)
     p2 = os.path.join(d, "lembar_kode_pengode2.csv")
     c2 = read_codes(p2, cats) if os.path.exists(p2) else {}
-    mach = {r["id"]: r for r in _reader(os.path.join(d, "kunci_mesin.csv"))}
+    mach = {r["id"]: r for r in _reader(os.path.join(d, a.kunci))}
     # presisi gerbang relevansi: semua artikel sampel dinilai relevan oleh mesin
     rel = read_codes(os.path.join(d, "lembar_kode_pengode1.csv"), cats, with_rel=True)
     rv = [x["_rel"] for x in rel.values() if x.get("_rel") is not None]
@@ -245,7 +284,7 @@ def cmd_evaluate(a):
         for i in both:
             if c1[i][c] != c2[i][c]:
                 diffs.append([i, c, labels[c], int(c1[i][c]), int(c2[i][c])])
-    out = os.path.join(d, "laporan_validasi.csv")
+    out = os.path.join(d, "laporan_validasi.csv" if a.kunci == "kunci_mesin.csv" else f"laporan_validasi_{a.kunci[:-4]}.csv")
     with open(out, "w", newline="", encoding="utf-8-sig") as f:
         w = csv.DictWriter(f, fieldnames=list(rows[0]))
         w.writeheader()
@@ -290,8 +329,12 @@ def main(argv=None):
     e = sp.add_parser("evaluate")
     e.add_argument("--dir", default="validasi")
     e.add_argument("--gold", help="lembar hasil adjudikasi (format sama dengan lembar kode)")
+    e.add_argument("--kunci", default="kunci_mesin.csv", help="file label mesin di --dir (mis. kunci_mesin_v2.csv)")
+    k = sp.add_parser("rekey", help="hitung ulang label mesin sampel dengan kamus saat ini")
+    k.add_argument("--in", dest="inp", nargs="+", default=["output_run3/articles.jsonl", "output_harian/articles.jsonl"])
+    k.add_argument("--dir", default="validasi")
     a = ap.parse_args(argv)
-    {"sample": cmd_sample, "evaluate": cmd_evaluate}[a.cmd](a)
+    {"sample": cmd_sample, "evaluate": cmd_evaluate, "rekey": cmd_rekey}[a.cmd](a)
 
 
 if __name__ == "__main__":

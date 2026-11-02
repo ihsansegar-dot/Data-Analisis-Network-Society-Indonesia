@@ -79,3 +79,16 @@ def test_semicolon_csv_from_excel(tmp_path):
                  encoding="utf-8")
     codes = V.read_codes(str(p), cats, with_rel=True)
     assert codes["A0001"][cats[0]] is True and codes["A0001"]["_rel"] is True
+
+
+def test_rekey_same_sample(tmp_path):
+    import json as _j
+    d = tmp_path / "val"
+    d.mkdir()
+    src = tmp_path / "a.jsonl"
+    src.write_text(_j.dumps({"url": "https://x/1", "title": "PKB Dukung Prabowo di Pilpres 2029",
+                             "body": "Partai Kebangkitan Bangsa PKB mendukung", "media": "M"}) + "\n", encoding="utf-8")
+    (d / "kunci_mesin.csv").write_text("id,url,primary\nA0001,https://x/1,\n", encoding="utf-8")
+    V.main(["rekey", "--in", str(src), "--dir", str(d)])
+    rows = list(csv.DictReader(open(d / "kunci_mesin_v2.csv", encoding="utf-8-sig")))
+    assert rows[0]["id"] == "A0001" and rows[0]["m_partai_islam"] == "1"

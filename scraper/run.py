@@ -121,7 +121,7 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
                    "scores": res.scores, "labels": res.labels, "primary": res.primary,
                    "matched": res.matched, "relevance_hits": res.relevance_hits, "jenis": res.jenis,
                    "scraped_at": datetime.now(timezone.utc).isoformat()}
-            if not args.keep_body:
+            if getattr(args, "trim_body", False):
                 rec["body"] = rec["body"][:1500]
             store.add(rec)
     except Exception as e:  # noqa: BLE001
@@ -148,7 +148,10 @@ def main(argv=None):
     ap.add_argument("--min-words", type=int, default=80)
     ap.add_argument("--stealth", action="store_true", help="pakai StealthyFetcher (browser) untuk semua")
     ap.add_argument("--no-prefilter", action="store_true", help="unduh semua kandidat, bukan hanya yang judul/slug-nya relevan")
-    ap.add_argument("--keep-body", action="store_true", help="simpan teks lengkap (default dipotong 1.500 karakter)")
+    ap.add_argument("--keep-body", action="store_true", help=argparse.SUPPRESS)  # kompatibilitas; kini bawaan
+    ap.add_argument("--trim-body", action="store_true",
+                    help="potong teks di articles.jsonl menjadi 1.500 karakter (bawaan: teks lengkap disimpan LOKAL "
+                         "agar bisa diklasifikasi ulang; CSV keluaran tetap hanya judul+cuplikan)")
     ap.add_argument("--include-unlabeled", action="store_true", help="sertakan artikel relevan tanpa kategori di sna_explorer.csv")
     ap.add_argument("--ignore-robots", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--out", default="output")

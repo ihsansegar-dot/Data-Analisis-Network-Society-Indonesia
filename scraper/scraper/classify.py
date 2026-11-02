@@ -38,6 +38,8 @@ class CategoryClassifier:
         self.ambig = {t.lower(): [_pattern(x) for x in xs] for t, xs in (cfg.get("ambiguous") or {}).items()}
         nn = cfg.get("non_news_title")
         self.non_news = re.compile(nn, re.IGNORECASE) if nn else None
+        self.non_news_any = [re.compile(p, re.IGNORECASE) for p in (cfg.get("non_news_title_any") or [])]
+        self.version = cfg.get("version", 1)
         self.cats: dict[str, dict] = {}
         for key, c in cfg["categories"].items():
             terms = []
@@ -45,6 +47,10 @@ class CategoryClassifier:
                 for t in lst:
                     terms.append((str(t), float(w), _pattern(str(t))))
             self.cats[key] = {"label": c.get("label", key), "terms": terms}
+
+    def is_non_news(self, title: str) -> bool:
+        t = (title or "").lower().strip()
+        return bool((self.non_news and self.non_news.search(t)) or any(p.search(t) for p in self.non_news_any))
 
     def label_of(self, key: str) -> str:
         return self.cats[key]["label"]
@@ -85,7 +91,7 @@ class CategoryClassifier:
         # skornya dipotong tepat di bawah ambang.
         labels = [k for k, v in sorted(scores.items(), key=lambda kv: -kv[1]) if v >= self.min_score]
         jenis = "berita"
-        if self.non_news and self.non_news.search(title.strip()):
+        if self.is_non_news(title):
             jenis, labels = "panduan_ibadah", []
         return Classification(
             relevant=len(hits) >= self.min_rel and any(h not in self.rel_weak for h in hits),
