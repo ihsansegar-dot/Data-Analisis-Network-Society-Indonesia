@@ -71,6 +71,28 @@ def _body_heuristic(page) -> str:
     return "\n".join(best)
 
 
+FALLBACK_CONTAINERS = ("[itemprop=articleBody]", ".detail-desc", ".detail_text", ".article-content", ".article__content",
+                       ".content-article", ".article-body", ".post-body", ".txt-article", ".entry-content", "article")
+
+
+def _body_fallback(page) -> str:
+    """Untuk situs yang memecah paragraf dengan <br> (bukan <p>): ambil teks kontainer artikel yang dikenal."""
+    best = ""
+    for sel in FALLBACK_CONTAINERS:
+        for el in page.css(sel):
+            for junk in el.css("script, style, figure, figcaption, aside, nav, .baca-juga, .related, .share"):
+                try:
+                    junk.remove() if hasattr(junk, "remove") else None
+                except Exception:  # noqa: BLE001
+                    pass
+            lines = [ln.strip() for ln in (el.get_all_text(separator="\n") or "").split("\n")]
+            lines = [ln for ln in lines if len(ln) > 30 and not NOISE.match(ln)]
+            t = "\n".join(lines)
+            if len(t) > len(best):
+                best = t
+    return best
+
+
 def extract(html: str | bytes, url: str) -> dict:
     page = Selector(html if isinstance(html, str) else html.decode("utf-8", "ignore"), url=url)
     ld = _jsonld(page)
@@ -91,6 +113,10 @@ def extract(html: str | bytes, url: str) -> dict:
     heur = _body_heuristic(page)
     if len(heur) > len(body) * 1.2:  # articleBody sering terpotong
         body = heur
+    if len(body.split()) < 120:
+        fb = _body_fallback(page)
+        if len(fb) > len(body) * 1.2:
+            body = _clean(fb)
     desc = meta('meta[property="og:description"]::attr(content)') or meta('meta[name="description"]::attr(content)')
     d = parse_date(published)
     return {

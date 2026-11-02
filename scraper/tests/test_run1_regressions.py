@@ -62,3 +62,61 @@ def test_resolve_base_fallback():
 
     f = PoliteFetcher("rmol.id", delay=0, session=S())
     assert resolve_base(f, "rmol.id") == "https://rmol.id"
+
+
+# ---- regresi run 2 (34 media, Okt 2026) ----
+def test_date_from_url():
+    from scraper.discover import date_from_url
+    assert date_from_url("https://rmol.id/read/2026/10/14/715529/judul-berita").day == 14
+    assert date_from_url("https://news.okezone.com/read/2026/10/03/337/3230940/judul").month == 10
+    assert date_from_url("https://www.viva.co.id/berita/politik/1712345-judul-tanpa-tanggal") is None
+
+
+def test_ambiguous_and_non_news():
+    pajak = CLF.classify("Mau Bayar PKB? Cek 23 Lokasi Samsat Keliling", "bayar pkb di samsat dekat masjid")
+    assert "partai_islam" not in pajak.labels and not pajak.relevant
+    doa = CLF.classify("Niat Sholat Tahajud Lengkap dengan Doanya", "umat islam sholat nabi ulama")
+    assert doa.jenis == "panduan_ibadah" and doa.labels == []
+    assert CLF.classify("Surat Edaran Menag soal Hari Santri", "santri pesantren").jenis == "berita"
+
+
+def test_body_fallback_br_paragraphs():
+    from scraper.extract import extract
+    para = "Partai Keadilan Sejahtera menyatakan sikap resmi terkait kebijakan pemerintah tentang pendidikan pesantren. "
+    html = ("<html><head><meta property='og:title' content='PKS Bersikap'></head><body>"
+            "<div class='detail-desc'>" + "<br><br>".join([para] * 12) + "</div></body></html>")
+    a = extract(html, "https://x/y")
+    assert a["n_words"] > 100
+
+
+def test_index_pages():
+    from datetime import datetime, timezone
+    from scrapling.engines.toolbelt.custom import Response
+    from scraper.discover import from_index_pages
+    from scraper.fetch import PoliteFetcher
+
+    class S:
+        calls = []
+
+        def get(self, url, **kw):
+            S.calls.append(url)
+            html = ("<a href='/read/2026/10/02/1/pks-dan-ulama-bertemu-bahas-umat'>PKS dan Ulama Bertemu Bahas Umat</a>"
+                    "<a href='/kanal/politik'>Politik</a><a href='https://lain.com/a-b-c'>x</a>")
+            return Response(url, html.encode(), 200, "OK", {}, {}, {})
+
+    f = PoliteFetcher("rmol.id", delay=0, session=S())
+    src = {"domain": "rmol.id", "index_urls": ["https://rmol.id/indeks?date={Y}-{m}-{d}"]}
+    out = from_index_pages(f, src, datetime(2026, 10, 1, tzinfo=timezone.utc), datetime(2026, 10, 2, tzinfo=timezone.utc))
+    assert S.calls == ["https://rmol.id/indeks?date=2026-10-01", "https://rmol.id/indeks?date=2026-10-02"]
+    assert {c.url for c in out} == {"https://rmol.id/read/2026/10/02/1/pks-dan-ulama-bertemu-bahas-umat"}
+    assert out[0].title.startswith("PKS dan Ulama") and out[0].published.day == 2
+
+
+def test_unreachable_source_skipped():
+    from scraper.fetch import PoliteFetcher, resolve_base
+
+    class S:
+        def get(self, url, **kw):
+            raise TimeoutError("timeout")
+
+    assert resolve_base(PoliteFetcher("islampos.com", delay=0, session=S()), "islampos.com") is None

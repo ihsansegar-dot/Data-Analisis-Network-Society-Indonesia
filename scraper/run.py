@@ -48,11 +48,15 @@ def user_date(s: str) -> datetime:
 
 def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFetcher):
     stats = {"media": src["name"], "kandidat": 0, "diunduh": 0, "relevan": 0, "berlabel": 0, "gagal": 0, "robots": 0,
-             "luar_tanggal": 0, "pendek": 0, "tidak_relevan": 0}
+             "luar_tanggal": 0, "pendek": 0, "tidak_relevan": 0, "tidak_terjangkau": 0}
     f = fetcher_factory(src["domain"], delay=args.delay, stealth=args.stealth or src.get("stealth", False),
                         respect_robots=not args.ignore_robots)
     try:
         base = resolve_base(f, src.get("base") or src["domain"])
+        if base is None:
+            log.warning("%s tidak terjangkau (www dan non-www), dilewati.", src["domain"])
+            stats["tidak_terjangkau"] = 1
+            return stats
         f.load_robots(base)
         cands = discover(f, base, src, since, until, limit=args.max_per_source)
         stats["kandidat"] = len(cands)
@@ -60,9 +64,12 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
             # judul (news sitemap / RSS) atau slug URL harus memuat istilah konteks; kandidat tanpa
             # judul dan slug tak informatif tetap dilewati — gunakan --no-prefilter bila perlu cakupan penuh
             cands = [c for c in cands if clf.prefilter(c.title + " " + urlparse(c.url).path)]
-        n = 0
+        n, streak_out = 0, 0
         for c in cands:
             if n >= args.max_per_source:
+                break
+            if streak_out >= 15:
+                log.info("%s: 15 unduhan berturut-turut di luar rentang tanggal; berhenti.", src["domain"])
                 break
             if store.is_seen(c.url):
                 continue
@@ -85,7 +92,9 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
             d = parse_date(art["published"]) or c.published
             if d and ((since and d < since) or (until and d > until)):
                 stats["luar_tanggal"] += 1
+                streak_out += 1
                 continue
+            streak_out = 0
             if not art["title"] and c.title:
                 art["title"] = c.title
             if art["n_words"] < args.min_words:
@@ -100,7 +109,7 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
             rec = {**art, "media": src["name"], "domain": src["domain"], "group": src.get("group", ""),
                    "published": d.isoformat() if d else "", "via": c.via,
                    "scores": res.scores, "labels": res.labels, "primary": res.primary,
-                   "matched": res.matched, "relevance_hits": res.relevance_hits,
+                   "matched": res.matched, "relevance_hits": res.relevance_hits, "jenis": res.jenis,
                    "scraped_at": datetime.now(timezone.utc).isoformat()}
             if not args.keep_body:
                 rec["body"] = rec["body"][:1500]

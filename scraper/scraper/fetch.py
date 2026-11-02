@@ -116,7 +116,8 @@ class PoliteFetcher:
 
 
 def resolve_base(fetcher, domain: str) -> str:
-    """Coba https://www.<domain> dan https://<domain>; pakai yang pertama menjawab (status < 500)."""
+    """Coba https://www.<domain> dan https://<domain>; pakai yang pertama menjawab (status < 500).
+    None bila keduanya tidak terjangkau (situs dilewati, tidak menghabiskan waktu dengan timeout berulang)."""
     first = base_url(domain)
     d = urlparse(first).netloc
     alt = d[4:] if d.startswith("www.") else "www." + d
@@ -127,7 +128,7 @@ def resolve_base(fetcher, domain: str) -> str:
                 return b
         except Exception as e:  # noqa: BLE001
             log.info("%s tidak dapat dijangkau: %s", b, e)
-    return first
+    return None
 
 
 def base_url(domain: str) -> str:

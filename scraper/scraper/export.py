@@ -56,11 +56,11 @@ class Store:
         with open(p1, "w", newline="", encoding="utf-8-sig") as f:
             w = csv.writer(f)
             w.writerow(["media", "domain", "group", "published", "title", "url", "author", "section",
-                        "n_words", "kategori_utama", "kategori", "istilah_cocok", "konteks_islam"]
+                        "n_words", "jenis", "kategori_utama", "kategori", "istilah_cocok", "konteks_islam"]
                        + [f"skor_{c}" for c in cats] + ["ringkasan"])
             for r in recs:
                 w.writerow([r["media"], r["domain"], r.get("group", ""), r["published"], r["title"], r["url"],
-                            r["author"], r["section"], r["n_words"],
+                            r["author"], r["section"], r["n_words"], r.get("jenis", "berita"),
                             self.clf.label_of(r["primary"]) if r["primary"] else "",
                             "; ".join(self.clf.label_of(k) for k in r["labels"]),
                             " | ".join(f"{k}: {', '.join(v)}" for k, v in r["matched"].items()),
@@ -90,6 +90,8 @@ class Store:
             w = csv.writer(f)
             w.writerow(["author", "text", "type", "target_user", "created_at", "platform", "atype", "term", "url"])
             for r in recs:
+                if r.get("jenis", "berita") != "berita":
+                    continue
                 if not r["labels"] and not include_unlabeled:
                     continue
                 lead = (r["description"] or r["body"])[:400]

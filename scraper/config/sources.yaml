@@ -1,7 +1,10 @@
 # Daftar media berita online. Cukup isi domain: sitemap & RSS dicari otomatis
 # (robots.txt -> Sitemap:, /sitemap.xml, /sitemap_index.xml, /news-sitemap.xml,
 #  dan <link rel="alternate" type="application/rss+xml"> di beranda).
-# Opsional per sumber: rss: [url, ...], sitemaps: [url, ...], stealth: true
+# Opsional per sumber: rss: ['url', '...'], sitemaps: [url, ...], stealth: true,
+#   index_urls: ['templat halaman indeks per tanggal', 'placeholder {Y} {m} {d}']
+#   CATATAN: templat index_urls di bawah disusun dari pola umum situs dan BELUM diverifikasi langsung;
+#   templat yang tidak menghasilkan tautan dalam 3 hari pertama otomatis dilewati.
 # (pakai StealthyFetcher/browser untuk situs yang memblokir permintaan biasa).
 # Tambah/hapus media sesuai kebutuhan penelitian.
 defaults:
@@ -9,20 +12,20 @@ defaults:
   max_articles_per_source: 300
 sources:
   # --- media nasional ---
-  - {name: Detik, domain: detik.com, group: nasional}
-  - {name: Kompas, domain: kompas.com, group: nasional}
-  - {name: Tempo, domain: tempo.co, group: nasional}
-  - {name: CNN Indonesia, domain: cnnindonesia.com, group: nasional}
-  - {name: Liputan6, domain: liputan6.com, group: nasional}
-  - {name: Antara, domain: antaranews.com, group: nasional}
-  - {name: Tribunnews, domain: tribunnews.com, group: nasional}
-  - {name: Okezone, domain: okezone.com, group: nasional}
-  - {name: Sindonews, domain: sindonews.com, group: nasional}
+  - {name: Detik, domain: detik.com, group: nasional, index_urls: ['https://news.detik.com/indeks?date={m}/{d}/{Y}']}
+  - {name: Kompas, domain: kompas.com, group: nasional, index_urls: ['https://indeks.kompas.com/?site=news&date={Y}-{m}-{d}']}
+  - {name: Tempo, domain: tempo.co, group: nasional, index_urls: ['https://www.tempo.co/indeks/{Y}-{m}-{d}']}
+  - {name: CNN Indonesia, domain: cnnindonesia.com, group: nasional, index_urls: ['https://www.cnnindonesia.com/indeks?date={Y}/{m}/{d}']}
+  - {name: Liputan6, domain: liputan6.com, group: nasional, index_urls: ['https://www.liputan6.com/indeks/{Y}/{m}/{d}']}
+  - {name: Antara, domain: antaranews.com, group: nasional, index_urls: ['https://www.antaranews.com/indeks?date={Y}-{m}-{d}'], rss: ['https://www.antaranews.com/rss/terkini.xml', 'https://www.antaranews.com/feed']}
+  - {name: Tribunnews, domain: tribunnews.com, group: nasional, index_urls: ['https://www.tribunnews.com/index-news?date={Y}-{m}-{d}']}
+  - {name: Okezone, domain: okezone.com, group: nasional, index_urls: ['https://index.okezone.com/bydate/channel/{Y}/{m}/{d}/1/']}
+  - {name: Sindonews, domain: sindonews.com, group: nasional, index_urls: ['https://index.sindonews.com/index/0?t={Y}-{m}-{d}'], rss: ['https://www.sindonews.com/feed']}
   - {name: Kumparan, domain: kumparan.com, group: nasional}
   - {name: Merdeka, domain: merdeka.com, group: nasional}
   - {name: Suara, domain: suara.com, group: nasional}
-  - {name: Viva, domain: viva.co.id, group: nasional}
-  - {name: JPNN, domain: jpnn.com, group: nasional}
+  - {name: Viva, domain: viva.co.id, group: nasional, index_urls: ['https://www.viva.co.id/indeks?date={Y}-{m}-{d}']}
+  - {name: JPNN, domain: jpnn.com, group: nasional, index_urls: ['https://www.jpnn.com/indeks?date={Y}-{m}-{d}']}
   - {name: IDN Times, domain: idntimes.com, group: nasional}
   - {name: Tirto, domain: tirto.id, group: nasional}
   - {name: Beritasatu, domain: beritasatu.com, group: nasional}
@@ -31,12 +34,12 @@ sources:
   - {name: iNews, domain: inews.id, group: nasional}
   - {name: Jawa Pos, domain: jawapos.com, group: nasional}
   - {name: Gatra, domain: gatra.com, group: nasional}
-  - {name: RMOL, domain: rmol.id, group: nasional}
+  - {name: RMOL, domain: rmol.id, group: nasional, index_urls: ['https://rmol.id/indeks?date={Y}-{m}-{d}'], rss: ['https://rmol.id/rss']}
   - {name: Bisnis, domain: bisnis.com, group: nasional}
   - {name: Pikiran Rakyat, domain: pikiran-rakyat.com, group: daerah}
   - {name: Solopos, domain: solopos.com, group: daerah}
   # --- media & kanal keislaman / ormas ---
-  - {name: Republika, domain: republika.co.id, group: islam}
+  - {name: Republika, domain: republika.co.id, group: islam, index_urls: ['https://republika.co.id/indeks/{Y}/{m}/{d}']}
   - {name: NU Online, domain: nu.or.id, group: islam}
   - {name: Muhammadiyah, domain: muhammadiyah.or.id, group: islam}
   - {name: Suara Muhammadiyah, domain: suaramuhammadiyah.id, group: islam}

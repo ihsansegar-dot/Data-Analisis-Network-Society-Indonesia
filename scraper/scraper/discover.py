@@ -6,7 +6,7 @@ import logging
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from email.utils import parsedate_to_datetime
 from urllib.parse import urljoin, urlparse
 
@@ -77,6 +77,20 @@ def parse_date(s: str | None) -> datetime | None:
     return d
 
 
+URL_DATE = re.compile(r"/(20\d{2})[/-]?(0[1-9]|1[0-2])[/-]?(0[1-9]|[12]\d|3[01])(?=[/-]|\d{3,}|$)")
+
+
+def date_from_url(url: str):
+    """Banyak media menaruh tanggal di path (/read/2026/10/14/..., /20261014...)."""
+    m = URL_DATE.search(urlparse(url).path)
+    if not m:
+        return None
+    try:
+        return datetime(int(m[1]), int(m[2]), int(m[3]), 12, tzinfo=timezone(timedelta(hours=7)))
+    except ValueError:
+        return None
+
+
 def _in_window(d, since, until) -> bool:
     if d is None:
         return True  # tanggal tak diketahui: biarkan, disaring lagi setelah ekstraksi
@@ -140,7 +154,7 @@ def walk_sitemap(fetcher, url, domain, since, until, out, seen, depth=0, max_map
         news = u.find("news")
         title = (news.findtext("title") if news is not None else "") or ""
         d = parse_date((news.findtext("publication_date") if news is not None else None)
-                       or u.findtext("lastmod"))
+                       or u.findtext("lastmod")) or date_from_url(loc)
         if _in_window(d, since, until):
             out.append(Candidate(loc, title.strip(), d, "sitemap"))
 
@@ -158,7 +172,7 @@ def parse_feed(resp, domain, since, until) -> list[Candidate]:
             link = el.get("href", "") if el is not None else ""
         if not link or not _same_site(link, domain) or not looks_like_article(link):
             continue
-        d = parse_date(it.findtext("pubDate") or it.findtext("published") or it.findtext("updated"))
+        d = parse_date(it.findtext("pubDate") or it.findtext("published") or it.findtext("updated")) or date_from_url(link)
         if _in_window(d, since, until):
             out.append(Candidate(link, (it.findtext("title") or "").strip(), d, "rss"))
     return out
@@ -170,9 +184,45 @@ def feeds_from_home(resp) -> list[str]:
     return [urljoin(resp.url, h) for h in hrefs]
 
 
+def from_index_pages(fetcher, source, since, until, max_days=62) -> list[Candidate]:
+    """Halaman indeks per tanggal (config: index_urls, placeholder {Y} {m} {d}). Judul diambil dari teks tautan.
+    Hanya halaman pertama tiap tanggal yang dibaca."""
+    tpls = source.get("index_urls") or []
+    if not tpls or not since:
+        return []
+    end = (until or datetime.now(timezone.utc)).date()
+    day, out, n = since.date(), [], 0
+    hits = {t: 0 for t in tpls}
+    dead = set()
+    while day <= end and n < max_days:
+        for t in tpls:
+            if t in dead:
+                continue
+            if n >= 3 and hits[t] == 0:  # templat salah/tidak didukung: tinggalkan setelah 3 hari tanpa hasil
+                log.info("templat indeks tidak menghasilkan tautan, dilewati: %s", t)
+                dead.add(t)
+                continue
+            url = t.format(Y=f"{day.year:04d}", m=f"{day.month:02d}", d=f"{day.day:02d}")
+            r = fetcher.get(url)
+            if r is None:
+                continue
+            before = len(out)
+            for a in r.css("a[href]"):
+                href = urljoin(r.url, a.attrib.get("href", ""))
+                if not _same_site(href, source["domain"]) or not looks_like_article(href):
+                    continue
+                txt = re.sub(r"\s+", " ", a.get_all_text() or "").strip()
+                pub = date_from_url(href) or datetime(day.year, day.month, day.day, 12, tzinfo=timezone(timedelta(hours=7)))
+                out.append(Candidate(href, txt if len(txt) > 15 else "", pub, "indeks"))
+            hits[t] += len(out) - before
+        day += timedelta(days=1)
+        n += 1
+    return out
+
+
 def discover(fetcher, base, source, since=None, until=None, limit=300) -> list[Candidate]:
     domain = source["domain"]
-    out: list[Candidate] = []
+    out: list[Candidate] = from_index_pages(fetcher, source, since, until)
     seen: set[str] = set()
     maps = list(source.get("sitemaps") or []) + fetcher.sitemaps_from_robots()
     if not maps:
@@ -194,12 +244,18 @@ def discover(fetcher, base, source, since=None, until=None, limit=300) -> list[C
         r = fetcher.get(urljoin(base + "/", f))
         if r is not None:
             out.extend(parse_feed(r, domain, since, until))
-    uniq, keys = [], set()
+    uniq, keys = [], {}
     for c in out:
         k = c.url.split("#")[0].rstrip("/")
         if k not in keys:
-            keys.add(k)
+            keys[k] = c
             uniq.append(c)
+        else:
+            o = keys[k]
+            if len(c.title) > len(o.title):
+                o.title = c.title
+            if o.published is None:
+                o.published = c.published
     log.info("%s: %d kandidat URL", domain, len(uniq))
     return spread_by_day(uniq)
 

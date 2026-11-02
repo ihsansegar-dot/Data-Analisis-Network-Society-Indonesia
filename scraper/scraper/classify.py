@@ -22,6 +22,7 @@ class Classification:
     labels: list[str]
     primary: str | None
     matched: dict[str, list[str]] = field(default_factory=dict)
+    jenis: str = "berita"  # "berita" atau "panduan_ibadah" (doa, niat, tata cara: bukan berita)
 
 
 class CategoryClassifier:
@@ -33,6 +34,10 @@ class CategoryClassifier:
         # istilah lemah dihitung, tetapi tidak cukup sendirian (mis. "umat Katolik", "Kemenag", "PAN")
         self.rel_weak = set(rel.get("weak_terms", []))
         self.min_score = float(cfg.get("min_score", 3))
+        # istilah ambigu: diabaikan bila teks memuat salah satu konteks pembatalnya (mis. PKB = pajak kendaraan)
+        self.ambig = {t.lower(): [_pattern(x) for x in xs] for t, xs in (cfg.get("ambiguous") or {}).items()}
+        nn = cfg.get("non_news_title")
+        self.non_news = re.compile(nn, re.IGNORECASE) if nn else None
         self.cats: dict[str, dict] = {}
         for key, c in cfg["categories"].items():
             terms = []
@@ -53,14 +58,19 @@ class CategoryClassifier:
                 break
         return n
 
+    def _ok(self, term: str, full: str) -> bool:
+        return not any(p.search(full) for p in self.ambig.get(term, ()))
+
     def classify(self, title: str, body: str) -> Classification:
         title = (title or "").lower()
         full = f"{title}\n{(body or '').lower()}"
-        hits = [t for t, p in self.rel_terms if p.search(full)]
+        hits = [t for t, p in self.rel_terms if p.search(full) and self._ok(t, full)]
         scores, matched = {}, {}
         for key, c in self.cats.items():
             s, m, strong = 0.0, [], False
             for term, w, p in c["terms"]:
+                if term in self.ambig and not self._ok(term, full):
+                    continue
                 nb = self._count(p, full)
                 if not nb:
                     continue
@@ -74,6 +84,9 @@ class CategoryClassifier:
         # Kategori hanya dilabel bila ada >=1 istilah berbobot >=2 (istilah pendukung saja tidak cukup);
         # skornya dipotong tepat di bawah ambang.
         labels = [k for k, v in sorted(scores.items(), key=lambda kv: -kv[1]) if v >= self.min_score]
+        jenis = "berita"
+        if self.non_news and self.non_news.search(title.strip()):
+            jenis, labels = "panduan_ibadah", []
         return Classification(
             relevant=len(hits) >= self.min_rel and any(h not in self.rel_weak for h in hits),
             relevance_hits=hits,
@@ -81,6 +94,7 @@ class CategoryClassifier:
             labels=labels,
             primary=labels[0] if labels else None,
             matched=matched,
+            jenis=jenis,
         )
 
     def prefilter(self, text: str) -> bool:
