@@ -59,3 +59,17 @@ def test_bad_discovery_path_does_not_stop_source(tmp_path):
     finally:
         runmod.discover, runmod.resolve_base = orig_d, orig_r
     assert st["luar_tanggal"] == 15 and st["relevan"] == 1
+
+
+def test_stop_after_consecutive_network_failures():
+    class S:
+        n = 0
+
+        def get(self, url, **kw):
+            S.n += 1
+            raise TimeoutError("timeout")
+
+    f = PoliteFetcher("islampos.com", delay=0, session=S())
+    for i in range(10):
+        f.get(f"https://www.islampos.com/x{i}")
+    assert S.n == 3

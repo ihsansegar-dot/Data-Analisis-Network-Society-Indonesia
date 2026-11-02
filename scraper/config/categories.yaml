@@ -34,7 +34,7 @@ ambiguous:
 
 # Judul konten panduan ibadah (doa, niat, tata cara) — bukan berita; tidak diberi kategori dan tidak ikut
 # sna_explorer.csv (kolom jenis di articles.csv). Run 2: banyak di Liputan6 dan Media Indonesia.
-non_news_title: '^(\d+\s+)?(kumpulan |bacaan |lafal |teks )?(niat|doa|doa-doa|bacaan|amalan|tata cara (shalat|salat|sholat|wudhu|wudu|mandi|tayamum|puasa|zakat)|urutan (shalat|salat|sholat|wudhu|mandi)|keutamaan|khasiat|zikir|dzikir|surat al|surah|kultum|khutbah|hukum (shalat|salat|sholat|puasa|makan|membaca|menikah|nikah|memakai|membakar|menjarah|lupa|mencuri)|bolehkah)\b'
+non_news_title: '^(\d+\s+)?(kumpulan |bacaan |lafal |teks )?(niat|doa|doa-doa|bacaan|amalan|tata cara (shalat|salat|sholat|wudhu|wudu|mandi|tayamum|puasa|zakat)|urutan (shalat|salat|sholat|wudhu|mandi)|keutamaan|khasiat|zikir|dzikir|surat al|surah|kultum|khutbah|hukum (shalat|salat|sholat|puasa|makan|membaca|menikah|nikah|memakai|membakar|menjarah|lupa|mencuri)|bolehkah|jadwal (waktu )?(shalat|salat|sholat|imsakiyah|imsak|puasa|buka puasa|sholat jumat))\b'
 
 categories:
   identitas_keislaman:

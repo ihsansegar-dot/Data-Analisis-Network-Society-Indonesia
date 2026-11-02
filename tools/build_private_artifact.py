@@ -57,6 +57,10 @@ def clean(recs, clf):
         if not looks_like_article(r["url"]):
             drop["url_non_artikel"] += 1
             continue
+        # penyaring judul non-berita dijalankan ulang dengan kamus terkini (pola baru juga berlaku untuk data lama)
+        if clf.non_news and clf.non_news.search(title.lower()):
+            drop["panduan_ibadah"] += 1
+            continue
         if "jenis" in r:
             if r["jenis"] != "berita":
                 drop["panduan_ibadah"] += 1

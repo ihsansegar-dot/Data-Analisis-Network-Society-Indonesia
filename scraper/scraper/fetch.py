@@ -28,6 +28,8 @@ class PoliteFetcher:
         self.robots_txt = ""
         self._session = session  # disuntikkan saat pengujian
         self._own_session = None
+        self.fail_streak = 0  # kegagalan jaringan beruntun (timeout/koneksi)
+        self.MAX_FAIL = 3
 
     # ---------- sesi ----------
     def _get_session(self):
@@ -104,11 +106,18 @@ class PoliteFetcher:
         return StealthyFetcher.fetch(url, headless=True, network_idle=True)
 
     def get(self, url: str):
+        if self.fail_streak >= self.MAX_FAIL:
+            return None  # situs dianggap tidak responsif; jangan habiskan waktu dengan timeout berikutnya
         try:
             r = self._raw_get(url)
         except Exception as e:  # noqa: BLE001
-            log.warning("GET %s gagal: %s", url, e)
+            self.fail_streak += 1
+            log.warning("GET %s gagal (%d/%d): %s", url, self.fail_streak, self.MAX_FAIL, e)
+            if self.fail_streak == self.MAX_FAIL:
+                log.warning("%s: %d kegagalan jaringan beruntun; sisa permintaan ke situs ini dilewati.",
+                            self.domain, self.MAX_FAIL)
             return None
+        self.fail_streak = 0
         if r is None or r.status != 200:
             if r is not None:
                 log.info("HTTP %s %s", r.status, url)
