@@ -78,6 +78,31 @@ Ubah `config/categories.yaml`: istilah per bobot (3 = sangat khas, 2 = khas, 1 =
 Singkatan ambigu sengaja tidak dipakai. Contohnya `pbb` (bisa berarti PBB/UN, Pajak Bumi dan Bangunan, atau
 Partai Bulan Bintang); yang dipakai adalah "partai bulan bintang".
 
+## Validasi kategori (wajib sebelum klaim penelitian)
+
+```bash
+# 1) sampel bertingkat 200 artikel + lembar kode buta untuk 2 pengode
+python validate.py sample --in output/articles.jsonl --n 200 --out validasi
+# 2) dua pengode mengisi kolom k_* (1/0) secara mandiri di lembar_kode_pengode1.csv dan _pengode2.csv
+#    (lengkapi definisi operasional di validasi/panduan_kode.md lebih dulu)
+# 3) hitung metrik
+python validate.py evaluate --dir validasi
+# 4) opsional: adjudikasi butir di perbedaan_pengode.csv, simpan sebagai adjudikasi.csv, lalu
+python validate.py evaluate --dir validasi --gold validasi/adjudikasi.csv
+```
+
+`laporan_validasi.csv` berisi, per kategori:
+- κ antar-pengode (tafsir Landis & Koch)
+- presisi (dengan CI 95% Wilson), recall, F1, dan κ mesin terhadap standar emas
+- ambang skor dengan F1 tertinggi
+
+Standar emas dipilih dengan urutan: adjudikasi, lalu butir yang disepakati kedua pengode, lalu pengode 1 bila
+hanya ada satu pengode. Memakai hanya butir yang disepakati membuat metrik mesin sedikit **optimistis**, karena
+butir sulit tersisih; adjudikasi menghilangkan bias ini. Sampel bertingkat menurut kategori utama mesin
+memastikan kategori jarang tetap terwakili. Akibatnya, presisi dan recall di sampel ini tidak sama dengan
+prevalensi di korpus. Ambang "terbaik" rawan overfitting bila contoh positifnya sedikit, jadi uji ulang pada
+sampel baru sebelum mengubah `min_score`.
+
 ## Keterbatasan — baca sebelum memakai hasilnya
 
 - **Klasifikasi berbasis kamus, belum tervalidasi.** Hasilnya adalah indikasi awal, bukan pengodean final. Sebelum
@@ -100,7 +125,7 @@ Partai Bulan Bintang); yang dipakai adalah "partai bulan bintang".
 ## Uji
 
 ```bash
-pip install pytest && python -m pytest -q tests
+pip install pytest && python -m pytest -q tests      # 7 uji: scraper + statistik validasi
 ```
 
 Uji berjalan offline: sesi palsu menyajikan fixture (robots.txt, sitemap indeks, news sitemap, RSS, 4 artikel)
