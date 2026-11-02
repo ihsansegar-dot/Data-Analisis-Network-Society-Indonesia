@@ -48,3 +48,17 @@ def test_haji_promo_not_pendidikan():
     k = CLF.classify("Hakim Konfrontasi Saksi Kasus Korupsi Kuota Haji", "kasus korupsi kuota haji di Kementerian Agama, "
                      "kuota haji tambahan, umat Islam dirugikan")
     assert "politik_kebijakan_publik" in k.labels and "pendidikan_sosial_keagamaan" not in k.labels
+
+
+def test_resolve_base_fallback():
+    from scraper.fetch import PoliteFetcher, resolve_base
+
+    class S:
+        def get(self, url, **kw):
+            if url.startswith("https://www.rmol.id"):
+                raise ConnectionError("DNS gagal")
+            from scrapling.engines.toolbelt.custom import Response
+            return Response(url, b"User-agent: *", 200, "OK", {}, {}, {})
+
+    f = PoliteFetcher("rmol.id", delay=0, session=S())
+    assert resolve_base(f, "rmol.id") == "https://rmol.id"

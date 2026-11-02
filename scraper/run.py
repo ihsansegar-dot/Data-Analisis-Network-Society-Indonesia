@@ -23,7 +23,7 @@ from scraper.classify import CategoryClassifier
 from scraper.discover import discover, parse_date
 from scraper.export import Store
 from scraper.extract import extract
-from scraper.fetch import PoliteFetcher, base_url
+from scraper.fetch import PoliteFetcher, resolve_base
 
 log = logging.getLogger("run")
 WIB = timezone(timedelta(hours=7))
@@ -52,7 +52,7 @@ def scrape_source(src, args, clf, store, since, until, fetcher_factory=PoliteFet
     f = fetcher_factory(src["domain"], delay=args.delay, stealth=args.stealth or src.get("stealth", False),
                         respect_robots=not args.ignore_robots)
     try:
-        base = base_url(src.get("base") or src["domain"])
+        base = resolve_base(f, src.get("base") or src["domain"])
         f.load_robots(base)
         cands = discover(f, base, src, since, until, limit=args.max_per_source)
         stats["kandidat"] = len(cands)

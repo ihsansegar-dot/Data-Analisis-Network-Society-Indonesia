@@ -115,6 +115,21 @@ class PoliteFetcher:
         return r
 
 
+def resolve_base(fetcher, domain: str) -> str:
+    """Coba https://www.<domain> dan https://<domain>; pakai yang pertama menjawab (status < 500)."""
+    first = base_url(domain)
+    d = urlparse(first).netloc
+    alt = d[4:] if d.startswith("www.") else "www." + d
+    for b in (first, f"https://{alt}"):
+        try:
+            r = fetcher._raw_get(f"{b}/robots.txt", check_robots=False)
+            if r is not None and r.status < 500:
+                return b
+        except Exception as e:  # noqa: BLE001
+            log.info("%s tidak dapat dijangkau: %s", b, e)
+    return first
+
+
 def base_url(domain: str) -> str:
     d = domain.strip().rstrip("/")
     if d.startswith("http"):
