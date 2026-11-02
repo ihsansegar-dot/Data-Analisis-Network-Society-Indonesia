@@ -50,7 +50,7 @@ def load(paths):
     return recs
 
 
-def clean(recs, clf):
+def clean(recs, clf, reclassify=True):
     rows, keep, drop = [], [], collections.Counter()
     for r in recs:
         title = html.unescape(r.get("title") or "").strip()
@@ -61,14 +61,16 @@ def clean(recs, clf):
         if clf.is_non_news(title):
             drop["panduan_ibadah"] += 1
             continue
-        if "jenis" in r:
+        if not reclassify and "jenis" in r:
             if r["jenis"] != "berita":
                 drop["panduan_ibadah"] += 1
                 continue
             labels = r.get("labels") or []
-        else:  # rekaman versi lama: klasifikasi ulang
+        else:  # klasifikasi ulang dengan kamus terkini (satu versi kamus untuk seluruh korpus)
             x = clf.classify(title, r.get("body") or "")
-            if not x.relevant:
+            # rekaman baru (punya "jenis") sudah lolos gerbang relevansi saat scraping dengan teks penuh;
+            # teks lama di jsonl bisa terpotong, jadi keputusan relevansinya tidak diulang
+            if not x.relevant and "jenis" not in r:
                 drop["tidak_relevan"] += 1
                 continue
             if x.jenis != "berita":
@@ -103,10 +105,12 @@ def main(argv=None):
     ap.add_argument("--jsonl", nargs="+", required=True)
     ap.add_argument("--out", required=True, help="path index.html keluaran")
     ap.add_argument("--csv-out", help="opsional: simpan juga CSV yang disisipkan")
+    ap.add_argument("--keep-scrape-labels", action="store_true",
+                    help="pakai label saat scraping (bisa campuran versi kamus) alih-alih klasifikasi ulang")
     a = ap.parse_args(argv)
     clf = CategoryClassifier(os.path.join(ROOT, "scraper", "config", "categories.yaml"))
     recs = load(a.jsonl)
-    rows, keep, drop = clean(recs, clf)
+    rows, keep, drop = clean(recs, clf, reclassify=not a.keep_scrape_labels)
     if not rows:
         sys.exit("Tidak ada artikel setelah dibersihkan; artifact TIDAK diperbarui.")
     buf = io.StringIO()
@@ -114,6 +118,7 @@ def main(argv=None):
     w.writerow(["author", "text", "type", "target_user", "created_at", "platform", "atype", "term", "url"])
     w.writerows(rows)
     meta, rng = meta_text(keep, drop)
+    meta += f" Kategori: kamus v{clf.version}, belum tervalidasi."
     data = {"name": "media_online_data_nyata.csv", "title": f"Media Online {rng} (data nyata)", "meta": meta,
             "csv": buf.getvalue()}
     if a.csv_out:
@@ -124,7 +129,7 @@ def main(argv=None):
     env = dict(os.environ, REALDATA_JSON=tmp, OUT_FILE=os.path.abspath(a.out))
     subprocess.run(["node", os.path.join(ROOT, "build.js")], check=True, env=env)
     os.unlink(tmp)
-    summary = {"artikel": len(rows), "media": len({r['media'] for r in keep}), "rentang": rng,
+    summary = {"kamus": clf.version, "artikel": len(rows), "media": len({r['media'] for r in keep}), "rentang": rng,
                "berkategori": sum(1 for r in rows if r[7]), "dibuang": dict(drop), "rekaman_masuk": len(recs)}
     print(json.dumps(summary, ensure_ascii=False))
 
