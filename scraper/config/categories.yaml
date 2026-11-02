@@ -11,14 +11,17 @@ relevance:
   # Artikel hanya disimpan bila memuat >= min_terms istilah konteks keislaman.
   min_terms: 2
   # Istilah yang juga dipakai di luar konteks Islam: ikut dihitung, tetapi minimal satu istilah lain harus ada.
-  weak_terms: [umat, ummat, kemenag, kementerian agama, haji, umrah, nabi, pan, ppp, persis, nu]
+  weak_terms: [umat, ummat, kemenag, kementerian agama, haji, nabi, ibadah, pan, ppp, persis, nu, ansor]
   terms: [islam, islami, islamic, muslim, muslimah, umat islam, umat, ummat, ulama, kiai, kyai, ustaz, ustadz,
           habib, santri, pesantren, masjid, musala, musholla, syariah, syariat, halal, fatwa, mui,
           majelis ulama indonesia, nahdlatul ulama, nu, pbnu, muhammadiyah, persis, al washliyah, dakwah,
           zakat, wakaf, haji, umrah, ramadan, ramadhan, idulfitri, iduladha, kemenag, kementerian agama,
           partai islam, pks, partai keadilan sejahtera, pkb, partai kebangkitan bangsa, ppp,
           partai persatuan pembangunan, pan, partai amanat nasional, partai bulan bintang, partai ummat,
-          masyumi, ormas islam, alquran, al-quran, quran, nabi, rasulullah, ukhuwah, khilafah]
+          masyumi, ormas islam, alquran, al-quran, quran, nabi, rasulullah, ukhuwah, khilafah,
+          shalat, salat, sholat, khutbah, khutbah jumat, fiqih, fikih, fiqh, hadis, hadits, sunnah, ibadah, takmir,
+          jemaah haji, jamaah haji, ibadah haji, kuota haji, kementerian haji, kemenhaj, bpkh, lazisnu, lazismu,
+          baznas, mudzakarah, bahtsul masail, fatayat, muslimat nu, ansor, banser, aisyiyah, pemuda muhammadiyah]
 
 min_score: 3
 
