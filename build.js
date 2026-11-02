@@ -13,6 +13,11 @@ html = html
   .replace('/*__SENT__*/', () => rd('src/sentiment.js'))
   .replace('/*__CORE__*/', () => rd('src/core.js'))
   // data nyata hanya disisipkan di build pribadi (artifact); repo publik tidak memuat teks berita
-  .replace('<!--REALDATA-->', () => '');
-fs.writeFileSync(path.join(__dirname, 'index.html'), html);
-console.log('index.html ditulis (' + (html.length / 1024).toFixed(0) + ' KB)');
+  // Data nyata hanya disisipkan di build pribadi (artifact). Repo publik tidak memuat teks berita.
+  // REALDATA_JSON=path/ke/realdata.json node build.js  -> menyisipkan window.REALDATA
+  .replace('<!--REALDATA-->', () => process.env.REALDATA_JSON
+    ? '<script>window.REALDATA=' + fs.readFileSync(process.env.REALDATA_JSON, 'utf8').replace(/<\//g, '<\\/') + ';</script>'
+    : '');
+const outFile = process.env.OUT_FILE || path.join(__dirname, 'index.html');
+fs.writeFileSync(outFile, html);
+console.log(outFile + ' ditulis (' + (html.length / 1024).toFixed(0) + ' KB)');
