@@ -107,3 +107,62 @@ class CategoryClassifier:
         """Saringan murah untuk judul/slug sebelum artikel diunduh."""
         t = (text or "").lower().replace("-", " ")
         return any(p.search(t) for _, p in self.rel_terms)
+
+
+# ---------------------------------------------------------------- mode kata kunci
+# Varian kata (imbuhan) untuk kata kunci yang dikenal; dipakai kecuali --exact-keywords.
+KEYWORD_VARIANTS = {
+    "penyadapan": ["penyadapan", "menyadap", "disadap", "sadap", "penyadap", "sadapan", "intersepsi komunikasi"],
+    "polri": ["polri", "kepolisian negara republik indonesia"],
+    "kepolisian": ["kepolisian"],
+    "polisi": ["polisi"],
+}
+
+
+class KeywordClassifier:
+    """Antarmuka sama dengan CategoryClassifier, tetapi relevan = memuat salah satu kata kunci.
+    Setiap kata kunci menjadi satu 'kategori' (label = kata kunci yang ditemukan)."""
+
+    def __init__(self, keywords: list[str], exact: bool = False, min_hits: int = 1):
+        self.version = "kw"
+        self.min_hits = min_hits
+        self.cats: dict[str, dict] = {}
+        for kw in keywords:
+            k = kw.strip()
+            if not k:
+                continue
+            key = re.sub(r"\W+", "_", k.lower()).strip("_")
+            variants = [k.lower()] if exact else KEYWORD_VARIANTS.get(k.lower(), [k.lower()])
+            self.cats[key] = {"label": k, "terms": [(v, 1.0, _pattern(v)) for v in variants]}
+        if not self.cats:
+            raise ValueError("daftar kata kunci kosong")
+        self.rel_terms = [(t, p) for c in self.cats.values() for t, _, p in c["terms"]]
+
+    def label_of(self, key: str) -> str:
+        return self.cats[key]["label"]
+
+    def is_non_news(self, title: str) -> bool:
+        return False
+
+    def prefilter(self, text: str) -> bool:
+        t = (text or "").lower().replace("-", " ")
+        return any(p.search(t) for _, p in self.rel_terms)
+
+    def classify(self, title: str, body: str) -> Classification:
+        title = (title or "").lower()
+        full = f"{title}\n{(body or '').lower()}"
+        scores, matched = {}, {}
+        for key, c in self.cats.items():
+            s, m = 0.0, []
+            for term, _, p in c["terms"]:
+                n = sum(1 for _ in p.finditer(full))
+                if n:
+                    s += n + (2 if p.search(title) else 0)
+                    m.append(term)
+            scores[key] = float(s)
+            if m:
+                matched[key] = m
+        labels = [k for k, v in sorted(scores.items(), key=lambda kv: -kv[1]) if v >= self.min_hits]
+        hits = [t for k in labels for t in matched[k]]
+        return Classification(relevant=bool(labels), relevance_hits=hits, scores=scores, labels=labels,
+                              primary=labels[0] if labels else None, matched=matched)

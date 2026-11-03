@@ -21,7 +21,7 @@ from urllib.parse import urlparse
 
 import yaml
 
-from scraper.classify import CategoryClassifier
+from scraper.classify import CategoryClassifier, KeywordClassifier
 from scraper.discover import discover, parse_date
 from scraper.export import Store
 from scraper.extract import extract
@@ -191,6 +191,9 @@ def main(argv=None):
     ap.add_argument("--include-unlabeled", action="store_true", help="sertakan artikel relevan tanpa kategori di sna_explorer.csv")
     ap.add_argument("--ignore-robots", action="store_true", help=argparse.SUPPRESS)
     ap.add_argument("--out", default="output")
+    ap.add_argument("--keywords", help="MODE KATA KUNCI: daftar dipisah koma (mis. \"Penyadapan,POLRI,Kepolisian,Polisi\"). "
+                    "Artikel disimpan bila memuat salah satunya; kategori keislaman tidak dipakai.")
+    ap.add_argument("--exact-keywords", action="store_true", help="tanpa varian imbuhan (mis. hanya 'penyadapan')")
     ap.add_argument("--refetch", metavar="JSONL", nargs="+",
                     help="unduh ulang semua URL di articles.jsonl lama untuk teks penuh + klasifikasi ulang; "
                          "hasil ditulis ke <out>/articles.jsonl (file lama tidak diubah)")
@@ -231,7 +234,11 @@ def main(argv=None):
         log.error("Tanggal mulai (%s) setelah tanggal akhir (%s).", since.date(), until.date())
         sys.exit(2)
 
-    clf = CategoryClassifier(args.categories)
+    clf = (KeywordClassifier(args.keywords.split(","), exact=args.exact_keywords) if args.keywords
+           else CategoryClassifier(args.categories))
+    if args.keywords:
+        log.info("mode kata kunci: %s", "; ".join(f"{c['label']} ({', '.join(t for t, _, _ in c['terms'])})"
+                                                     for c in clf.cats.values()))
     if args.refetch:
         os.makedirs(args.out, exist_ok=True)
         out_path = os.path.join(args.out, "articles.jsonl")

@@ -81,6 +81,17 @@ Catatan:
 Komputer harus menyala dan pengguna sedang login pada jam yang dijadwalkan. Karena setiap run mengambil 2 hari, satu hari
 yang terlewat tetap tertutup oleh run berikutnya; lebih dari itu perlu dijalankan manual dengan `--since/--until`.
 
+## Mode kata kunci (topik di luar kategori keislaman)
+
+```bash
+python run.py --keywords "Penyadapan,POLRI,Kepolisian,Polisi" --since 2026-10-03 --max-per-source 100 --out output_polri
+```
+
+Artikel disimpan bila memuat salah satu kata kunci (kata utuh, tidak peka huruf besar/kecil); gerbang relevansi
+keislaman dan 11 kategori tidak dipakai. Setiap kata kunci menjadi label, sehingga di `sna_explorer.csv` kolom `term`
+berisi kata kunci yang ditemukan. Varian imbuhan dipakai untuk kata kunci yang dikenal (Penyadapan → menyadap, disadap,
+sadap, penyadap, sadapan); `--exact-keywords` mematikannya. Peluncur Windows: `jalankan_kata_kunci_polri.bat`.
+
 ## Alur kerja
 
 1. **Penemuan URL**: baris `Sitemap:` di robots.txt, lalu lokasi sitemap umum (news sitemap diutamakan),
