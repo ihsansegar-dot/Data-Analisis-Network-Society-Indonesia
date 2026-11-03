@@ -61,7 +61,7 @@ function updateLinkCounts(){
   if(state.all){var ps=state.plat==='all'?state.all.platforms:[state.plat];
     ps.forEach(function(p){['mention','retweet','reply','cooc','quote'].forEach(function(n){var d=state.all.res[p]&&state.all.res[p][n];if(!d)return;d.g.edges.forEach(function(ed){c[n]+=ed.w;});});});
     c.cooc/=2;}
-  ['mention','retweet','reply','cooc','quote'].forEach(function(f){var el=$('ltc_'+f);if(el){el.textContent=fmt(c[f]);var lb=el.closest('label');if(lb){if(!lb.dataset.t0)lb.dataset.t0=lb.title;lb.title=lb.dataset.t0+(state.all?' · '+fmt(c[f])+' link':'');}}});
+  ['mention','retweet','reply','cooc','quote'].forEach(function(f){var el=$('ltc_'+f);if(el){el.textContent=fmt(c[f]);var lb=el.closest('label');if(lb){if(!lb.dataset.t0)lb.dataset.t0=lb.title;var nm=lb.querySelector('.lttext b');lb.title=state.all&&nm?nm.textContent+' · '+fmt(c[f])+' link':lb.dataset.t0;}}});
   $('ltScope').textContent='';
 }
 function updateLinkChips(){$('gLinks').classList.add('hide');}
