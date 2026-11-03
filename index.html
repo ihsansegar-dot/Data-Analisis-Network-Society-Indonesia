@@ -558,6 +558,18 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
 .ntl .ct{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--panel2);border-radius:5px;padding:0 6px}
 .ntrow.off .ntn,.ntrow.off svg{opacity:.4}
 
+/* Node Types: kotak dan tombol lebih kecil */
+.nthelp{font-size:11px;line-height:1.45;color:var(--muted);background:var(--bg);border:1px solid var(--line);border-radius:7px;padding:6px 8px;margin:-4px 0 10px}
+.nthelp code{font-size:10.5px;padding:0 3px}
+.ntcard .ntquick .btn{padding:4px 6px;font-size:11px;border-radius:6px;white-space:nowrap}
+.ntcard .ntlist{padding:4px}
+.ntcard .ntrow{padding:1px 4px;gap:2px 6px}
+.ntcard .ntl{gap:6px;font-size:12.5px}
+.ntcard .ntl input{width:13px;height:13px}
+.ntcard .ntl svg{width:10px;height:10px}
+.ntcard .ntl .ct{font-size:10px;padding:0 5px}
+.ntcard .ntedit{padding:2px 7px;font-size:10.5px;border-radius:5px}
+
 /* Edge / Link Types: daftar centang bergaya kotak merah */
 .lthead{text-transform:uppercase;letter-spacing:.08em;font-size:13px}
 .ltlist{display:flex;flex-direction:column;gap:6px}
@@ -726,10 +738,10 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
       </details>
     </section>
 
-    <section class="card">
+    <section class="card ntcard">
       <h2><span class="n">4</span>Node Types</h2>
-      <div class="sub" style="margin:-4px 0 10px">Tentukan tipe node. Satu entri per baris atau dipisah koma; sinonim: <code>Label: alias1|alias2</code>. Untuk Account/News Site/Organisasi, alias yang sama dengan nama akun di data menandai akun itu.</div>
-      <div class="row" style="margin-bottom:8px"><button class="btn sm" id="ntAll">Semua</button><button class="btn sm" id="ntAcc">Hanya akun</button><button class="btn sm" id="ntEnt">Hanya entitas</button></div>
+      <div class="nthelp" title="Tentukan tipe node. Satu entri per baris atau dipisah koma; sinonim: Label: alias1|alias2. Untuk Account/News Site/Organisasi, alias yang sama dengan nama akun di data menandai akun itu.">Satu entri per baris/koma · sinonim <code>Label: a|b</code> · alias = nama akun menandai akunnya</div>
+      <div class="row ntquick" style="margin-bottom:8px"><button class="btn sm" id="ntAll">Semua</button><button class="btn sm" id="ntAcc">Hanya akun</button><button class="btn sm" id="ntEnt">Hanya entitas</button></div>
       <div class="ntlist">
         <div class="ntrow">
           <label class="ntl"><input type="checkbox" class="ntv" data-t="account" checked><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="5.5" fill="#94a3b8"/></svg><span class="ntn">Account <span class="sub">· default</span></span><span class="ct" id="ntc_account">0</span></label>
@@ -772,7 +784,7 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
           <textarea id="eTag" rows="2" class="hide" placeholder="#pemilu2029, #bansos"></textarea>
         </div>
       </div>
-      <div class="sub" style="margin-top:8px">Centang = tampilkan di graf &amp; tabel (langsung). “Atur” = isi daftar alias, lalu klik Terapkan.</div>
+      <div class="nthelp" style="margin:8px 0 0">Centang = tampilkan · “Atur” = isi alias → Terapkan</div>
       <div class="row" style="margin-top:8px"><button class="btn sm" id="eAutoTag">Isi hashtag teratas</button><button class="btn sm" id="eAutoTerm">Saran term</button></div>
       <label class="f" style="margin-top:10px">Filter analisis<select id="eMode"><option value="none">Tidak memfilter — hanya hitung sebutan</option><option value="any">Hanya data yang menyebut salah satu entitas</option></select></label>
       <div class="row" style="margin-top:10px"><button class="btn primary" id="eApply">Terapkan</button><button class="btn" id="eExport">Entitas CSV</button></div>
