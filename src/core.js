@@ -423,7 +423,7 @@ var SNA = (function () {
     var date = new Date().toISOString().slice(0, 10);
     L.push('<?xml version="1.0" encoding="UTF-8"?>');
     L.push('<gexf xmlns="http://gexf.net/1.3" xmlns:viz="http://gexf.net/1.3/viz" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://gexf.net/1.3 http://gexf.net/1.3/gexf.xsd" version="1.3">');
-    L.push('  <meta lastmodifieddate="' + date + '"><creator>SNA Explorer</creator><description>' + xmlEsc(title) + '</description></meta>');
+    L.push('  <meta lastmodifieddate="' + date + '"><creator>Jaringan Politik Partai Islam di Indonesia</creator><description>' + xmlEsc(title) + '</description></meta>');
     L.push('  <graph defaultedgetype="directed" mode="static">');
     L.push('    <attributes class="node">');
     var attrs = [['in_degree', 'integer'], ['out_degree', 'integer'], ['in_degree_weighted', 'double'], ['out_degree_weighted', 'double'], ['betweenness', 'double'], ['pagerank', 'double'], ['community', 'integer'], ['sentiment_written_mean', 'double'], ['sentiment_written_n', 'integer'], ['sentiment_received_mean', 'double'], ['sentiment_received_n', 'integer'], ['negative_received_n', 'integer']];

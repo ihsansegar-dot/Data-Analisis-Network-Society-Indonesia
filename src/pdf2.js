@@ -50,7 +50,7 @@ function buildPDF(scope){
   doc.setFillColor(10,17,34);doc.rect(0,0,PW,34,'F');
   font(17,'bold',[255,255,255]);T('Laporan Analisis Jaringan & Sentimen',M,15);
   font(10.5,'normal',[180,195,220]);T(title+' - '+(state.fileName||'data'),M,22.5);
-  font(8.5,'normal',[140,155,185]);T('Dibuat '+now.toLocaleString('id-ID')+' - SNA Explorer',M,28.5);
+  font(8.5,'normal',[140,155,185]);T('Dibuat '+now.toLocaleString('id-ID')+' - Jaringan Politik Partai Islam di Indonesia',M,28.5);
   y=42;
   if(state.isDemo){doc.setFillColor(254,243,199);doc.setDrawColor(245,184,74);doc.roundedRect(M,y,CW,11,1.5,1.5,'FD');font(8.5,'bold',[146,64,14]);T('DATA SINTETIS - dibangkitkan acak oleh aplikasi untuk demonstrasi; perbedaan antar-platform bukan temuan.',M+3,y+6.8);y+=16;}
   h2('Data dan pengaturan');
@@ -193,7 +193,7 @@ function buildPDF(scope){
    'Entitas: Organisasi, Lokasi, Tempat/Place, Term dan #Hashtag dicocokkan per kata utuh (tidak peka huruf besar/kecil, dengan sinonim) dan/atau diambil dari kolom CSV yang sesuai. Sebutan = jumlah baris yang menyebut entitas.'+(state.ent.focus?' Analisis dalam laporan ini difokuskan pada entitas: '+entName(state.ent.focus)+'.':state.ent.mode==='any'?' Analisis dalam laporan ini hanya memakai data yang menyebut salah satu entitas.':''),
    'Validasi: label manual diperoleh dari sampel acak sederhana; kesesuaian dilaporkan sebagai akurasi (CI Wilson), Cohen kappa, presisi, recall dan F1. Ketidakpastian proporsi dilaporkan sebagai interval kepercayaan 95% Wilson; aktor dengan teks < '+state.sent.minN+' tidak dimasukkan ke peringkat sentimen aktor.',
    'Emoji dihilangkan dan karakter lain di luar Latin-1 ditampilkan sebagai "?" di PDF ini.'].forEach(function(s){para(s,9,INK);y+=1;});
-  var pc=doc.getNumberOfPages();for(var pg=1;pg<=pc;pg++){doc.setPage(pg);font(7.5,'normal',MUT);T('SNA Explorer - '+(state.fileName||'data'),M,PH-8);T('Halaman '+pg+' dari '+pc,PW-M,PH-8,{align:'right'});}
+  var pc=doc.getNumberOfPages();for(var pg=1;pg<=pc;pg++){doc.setPage(pg);font(7.5,'normal',MUT);T('Jaringan Politik Partai Islam di Indonesia - '+(state.fileName||'data'),M,PH-8);T('Halaman '+pg+' dari '+pc,PW-M,PH-8,{align:'right'});}
   return doc;
 }
 $('exPdf').onclick=function(){

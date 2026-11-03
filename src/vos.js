@@ -91,7 +91,7 @@ function vosExport(){
       if(p){it.x=p[0];it.y=p[1];}if(se.outMean[i]!=null)it.scores['Sentimen ditulis']=+se.outMean[i].toFixed(4);if(se.inMean[i]!=null)it.scores['Sentimen diterima']=+se.inMean[i].toFixed(4);return it;}),
     links:links.map(function(l){return{source_id:l[0]+1,target_id:l[1]+1,strength:l[2]};}),
     clusters:Array.from(cl).sort(function(a,b){return a-b;}).map(function(c){return{cluster:c+1,label:'Komunitas '+c};})},
-    info:{title:'SNA Explorer — '+pName(state.plat)+' · '+netName(state.plat,state.net),description:'Diekspor dari SNA Explorer. Link tak berarah (dua arah dijumlahkan), strength = jumlah interaksi mentah. Normalisasi di aplikasi: '+vosNormName()+'. Layout: '+(state.vos.layout==='vos'?'VOS (attraction '+state.vos.attr+', repulsion '+state.vos.rep+')':'force-directed')+'.'}};
+    info:{title:'Jaringan Politik Partai Islam di Indonesia — '+pName(state.plat)+' · '+netName(state.plat,state.net),description:'Diekspor dari Jaringan Politik Partai Islam di Indonesia. Link tak berarah (dua arah dijumlahkan), strength = jumlah interaksi mentah. Normalisasi di aplikasi: '+vosNormName()+'. Layout: '+(state.vos.layout==='vos'?'VOS (attraction '+state.vos.attr+', repulsion '+state.vos.rep+')':'force-directed')+'.'}};
   var base=fileBase()+'_'+slug(pName(state.plat))+'_'+slug(netName(state.plat,state.net))+'_vosviewer';
   save(base+'.zip',zip([{name:base+'_map.txt',data:M.join('\n')},{name:base+'_network.txt',data:N.join('\n')},{name:base+'.json',data:JSON.stringify(json,null,1)}]));
 }
