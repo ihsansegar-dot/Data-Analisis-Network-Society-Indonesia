@@ -2,7 +2,8 @@
 /* window.REALDATA = {name, csv, meta} disisipkan hanya pada build artifact pribadi (tidak di repo publik). */
 function loadReal(){
   var R=window.REALDATA;if(!R){demo();return;}
-  var setIf=function(id,v){if(!$(id).value.trim())$(id).value=v;};
+  var D=R.dict||{};
+  var setIf=function(id,v){if(!$(id).value.trim())$(id).value=(D[id]!=null?D[id]:v);};
   setIf('eOrg','NU: nu|nahdlatul ulama|pbnu|pwnu|pcnu\nMuhammadiyah: muhammadiyah|pp muhammadiyah\nMUI: mui|majelis ulama indonesia\nKemenag: kemenag|kementerian agama\nBAZNAS: baznas\nPKS: pks|partai keadilan sejahtera\nPKB: pkb|partai kebangkitan bangsa\nPPP: ppp|partai persatuan pembangunan\nPAN: partai amanat nasional\nPolri: polri|kepolisian');
   setIf('eLoc','Jakarta\nJawa Barat: jawa barat|jabar\nJawa Tengah: jawa tengah|jateng\nJawa Timur: jawa timur|jatim\nAceh\nSumatera Selatan: sumatera selatan|sumsel\nKalimantan: kalimantan|kalsel|kalbar|kalteng');
   setIf('ePerson','Prabowo Subianto: prabowo\nGibran Rakabuming: gibran\nKH Miftachul Akhyar: miftachul akhyar\nGus Kikin: gus kikin|abdul hakim mahfudz');

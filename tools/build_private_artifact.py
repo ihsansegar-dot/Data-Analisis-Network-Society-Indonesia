@@ -29,7 +29,7 @@ import tempfile
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "scraper"))
 
-from scraper.classify import CategoryClassifier  # noqa: E402
+from scraper.classify import CategoryClassifier, KeywordClassifier  # noqa: E402
 from scraper.discover import looks_like_article  # noqa: E402
 
 
@@ -86,16 +86,16 @@ def clean(recs, clf, reclassify=True):
     return rows, keep, drop
 
 
-def meta_text(keep, drop):
+def meta_text(keep, drop, sumber="run Oktober + jadwal harian"):
     grp = collections.Counter(r.get("group", "lain") for r in keep)
     media = collections.Counter(r["media"] for r in keep)
     days = sorted(r["published"][:10] for r in keep if r.get("published"))
     rng = f"{days[0]} s.d. {days[-1]}" if days else "tanggal tidak diketahui"
     top = ", ".join(f"{m} {n}" for m, n in media.most_common(4))
     g = ", ".join(f"{k} {v}" for k, v in grp.most_common())
-    return (f"{len(keep)} artikel berita dari {len(media)} media ({g}), {rng}, hasil news scraper (run Oktober + jadwal "
-            f"harian) yang dibersihkan otomatis ({drop.get('panduan_ibadah', 0)} konten panduan ibadah dan "
-            f"{drop.get('url_non_artikel', 0) + drop.get('tidak_relevan', 0)} artikel non-berita/tidak relevan dibuang). "
+    dibuang = drop.get('panduan_ibadah', 0) + drop.get('url_non_artikel', 0) + drop.get('tidak_relevan', 0)
+    return (f"{len(keep)} artikel berita dari {len(media)} media ({g}), {rng}, hasil news scraper ({sumber})"
+            + (f"; {dibuang} konten non-berita/tidak relevan dibuang otomatis" if dibuang else "") + ". "
             f"Media terbanyak: {top}. Komposisi media tidak seimbang dan beberapa media besar belum terambil. "
             f"Hanya judul dan cuplikan pembuka yang disimpan."), rng
 
@@ -105,10 +105,16 @@ def main(argv=None):
     ap.add_argument("--jsonl", nargs="+", required=True)
     ap.add_argument("--out", required=True, help="path index.html keluaran")
     ap.add_argument("--csv-out", help="opsional: simpan juga CSV yang disisipkan")
+    ap.add_argument("--keywords", help="mode kata kunci (sama dengan run.py --keywords); label = kata kunci")
+    ap.add_argument("--judul", help="awalan judul proyek di aplikasi (bawaan: 'Media Online')")
+    ap.add_argument("--entitas", help="JSON kamus entitas aplikasi {eOrg, ePerson, eLoc, ...} (mengganti bawaan)")
+    ap.add_argument("--sumber", default="run Oktober + jadwal harian", help="keterangan asal data di banner")
     ap.add_argument("--keep-scrape-labels", action="store_true",
                     help="pakai label saat scraping (bisa campuran versi kamus) alih-alih klasifikasi ulang")
     a = ap.parse_args(argv)
     clf = CategoryClassifier(os.path.join(ROOT, "scraper", "config", "categories.yaml"))
+    if a.keywords:
+        clf = KeywordClassifier(a.keywords.split(","))
     recs = load(a.jsonl)
     rows, keep, drop = clean(recs, clf, reclassify=not a.keep_scrape_labels)
     if not rows:
@@ -117,10 +123,13 @@ def main(argv=None):
     w = csv.writer(buf, lineterminator="\n")
     w.writerow(["author", "text", "type", "target_user", "created_at", "platform", "atype", "term", "url"])
     w.writerows(rows)
-    meta, rng = meta_text(keep, drop)
-    meta += f" Kategori: kamus v{clf.version}, belum tervalidasi."
-    data = {"name": "media_online_data_nyata.csv", "title": f"Media Online {rng} (data nyata)", "meta": meta,
+    meta, rng = meta_text(keep, drop, a.sumber)
+    meta += (f" Kolom term = kata kunci yang cocok ({', '.join(c['label'] for c in clf.cats.values())}); dicocokkan sebagai kata utuh."
+             if a.keywords else f" Kategori: kamus v{clf.version}, belum tervalidasi.")
+    data = {"name": "media_online_data_nyata.csv", "title": f"{a.judul or 'Media Online'} {rng} (data nyata)", "meta": meta,
             "csv": buf.getvalue()}
+    if a.entitas:
+        data["dict"] = json.load(open(a.entitas, encoding="utf-8"))
     if a.csv_out:
         open(a.csv_out, "w", encoding="utf-8").write(buf.getvalue())
     with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as f:
