@@ -49,6 +49,7 @@ var SNA = (function () {
     comment: 'reply', comments: 'reply', komentar: 'reply', balasan: 'reply', balas: 'reply',
     share: 'retweet', shared: 'retweet', reshare: 'retweet', bagikan: 'retweet', reposts: 'retweet',
     like: 'like', likes: 'like', liked: 'like', suka: 'like', menyukai: 'like', disukai: 'like', love: 'like', reaction: 'like', reactions: 'like', reaksi: 'like', react: 'like', favorite: 'like', favourite: 'like', fav: 'like', heart: 'like',
+    view: 'view', views: 'view', tayangan: 'view', impression: 'view', impressions: 'view',
     video: 'tweet', unggahan: 'tweet', status: 'tweet', artikel: 'tweet', article: 'tweet'
   };
   var PLATFORM_MAP = {
@@ -83,6 +84,8 @@ var SNA = (function () {
     Object.keys(EXT).forEach(function (k) { EXT[k].some(function (h) { var i = header.indexOf(h); if (i >= 0) { extIdx[k] = i; extCols[k] = h; return true; } return false; }); });
     var uIdx = -1;
     ['url', 'link', 'tautan', 'permalink'].some(function (k) { uIdx = header.indexOf(k); return uIdx >= 0; });
+    var vIdx = -1;
+    ['views', 'view_count', 'view', 'tayangan', 'impressions'].some(function (k) { vIdx = header.indexOf(k); return vIdx >= 0; });
     var sIdx = -1;
     ['sentiment', 'sentimen', 'label_sentimen', 'sentiment_label', 'label'].some(function (k) { sIdx = header.indexOf(k); return sIdx >= 0; });
     var rep = { extCols: extCols, hasManual: sIdx >= 0, manualCol: sIdx >= 0 ? header[sIdx] : null, rows: rows.length - 1, byType: {}, unknownType: 0, noAuthor: 0, noTarget: 0, badDate: 0, missingCols: need.filter(function (k) { return idx[k] < 0; }), hasPlatform: pIdx >= 0, platformCol: pIdx >= 0 ? header[pIdx] : null, rawPlatformsUnknown: {} };
@@ -120,6 +123,8 @@ var SNA = (function () {
       for (var ek in extIdx) { var ev = String(row[extIdx[ek]] || '').trim(); if (ev) { if (!ext) ext = {}; ext[ek] = ev; } }
       var rec = { a: a, t: t, type: type, ts: ts, p: p, text: idx.text >= 0 ? String(row[idx.text] || '') : '', man: man, ext: ext };
       if (uIdx >= 0) { var uv = String(row[uIdx] || '').trim(); if (/^https?:\/\//i.test(uv)) rec.url = uv; }
+      if (vIdx >= 0) { var vv = parseFloat(String(row[vIdx] || '').replace(/[^\d.]/g, '')); if (vv > 0) rec.v = vv; }
+      if (type === 'view' && !(rec.v > 0)) { rep.viewNoCount = (rep.viewNoCount || 0) + 1; continue; }
       recs.push(rec);
     }
     return { records: recs, report: rep };
@@ -141,7 +146,7 @@ var SNA = (function () {
       if (to != null && r.ts > to) continue;
       if (r.a === r.t && !keepSelf) { self++; continue; }
       var s = gid(r.a), t = gid(r.t), key = s + '|' + t;
-      ew.set(key, (ew.get(key) || 0) + 1); inter++;
+      ew.set(key, (ew.get(key) || 0) + (type === 'view' ? (r.v > 0 ? r.v : 0) : 1)); inter++;
       if (r.lt) { var lm = el.get(key); if (!lm) { lm = {}; el.set(key, lm); } lm[r.lt] = (lm[r.lt] || 0) + 1; }
       if (r.s != null) { var ss = es.get(key); if (!ss) { ss = [0, 0, 0]; es.set(key, ss); } ss[0] += r.s; ss[1]++; if (r.lab === 'neg') ss[2]++; }
       if (r.p) { var ps = ep.get(key); if (!ps) { ps = {}; ep.set(key, ps); } ps[r.p] = (ps[r.p] || 0) + 1; }
@@ -399,7 +404,7 @@ var SNA = (function () {
     plats.forEach(function (p, pi) {
       res[p] = {};
       var nets = p === 'media' ? ['retweet', 'reply'] : ['retweet', 'reply', 'like'];
-      ['mention', 'cooc', 'quote'].forEach(function (x) { if (records.some(function (r) { return r.p === p && r.type === x && r.t; })) nets.push(x); });
+      ['mention', 'cooc', 'quote', 'view'].forEach(function (x) { if (records.some(function (r) { return r.p === p && r.type === x && r.t; })) nets.push(x); });
       nets.forEach(function (ty) {
         var o = {}; for (var k in opts) o[k] = opts[k]; o.platform = p; o.net = ty;
         var g = buildGraph(records, ty, o);
