@@ -534,6 +534,7 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
           <button class="tab" data-net="mention" role="tab" id="tabMention">Mention</button>
           <button class="tab" data-net="cooc" role="tab" id="tabCooc">Co-occurrence</button>
           <button class="tab" data-net="quote" role="tab" id="tabQuote">Quote</button>
+          <button class="tab" data-net="view" role="tab" id="tabView" title="Jangkauan: akun yang berinteraksi (repost/reply/quote/mention) → pemilik postingan, bobot = jumlah view postingan">View</button>
         </div>
         <span class="sub" id="netDesc"></span>
       </div>
@@ -674,8 +675,8 @@ var PLATS=[
 var PL={lainnya:{name:'Lainnya',color:'#64748b',share:'Share',reply:'Komentar',like:'Like'}};
 PLATS.forEach(function(p){PL[p[0]]={name:p[1],color:p[2],share:p[3],reply:p[4],like:p[5]};});
 function pName(p){return (PL[p]||{name:p}).name;}
-function netName(p,net){var o=PL[p]||PL.lainnya;return net==='retweet'?o.share:net==='like'?(o.like||'Like'):net==='cooc'?'Co-occurrence':net==='quote'?'Quote':net==='mention'?'Mention':o.reply;}
-function netsOf(p){var b=(p==='media'?['retweet','reply']:['retweet','reply','like']).filter(function(x){return famOn(x);});['mention','cooc','quote'].forEach(function(x){if(state.all&&state.all.res[p]&&state.all.res[p][x]&&famOn(x))b=b.concat(x);});return b;}
+function netName(p,net){var o=PL[p]||PL.lainnya;return net==='retweet'?o.share:net==='like'?(o.like||'Like'):net==='cooc'?'Co-occurrence':net==='quote'?'Quote':net==='mention'?'Mention':net==='view'?'View':o.reply;}
+function netsOf(p){var b=(p==='media'?['retweet','reply']:['retweet','reply','like']).filter(function(x){return famOn(x);});['mention','cooc','quote','view'].forEach(function(x){if(state.all&&state.all.res[p]&&state.all.res[p][x]&&famOn(x))b=b.concat(x);});return b;}
 function hasNet(p,net){return !!(state.all&&state.all.res[p]&&state.all.res[p][net]);}
 var $=function(id){return document.getElementById(id);};
 var state={records:null,report:null,all:null,plat:'all',net:'retweet',fileName:null,filePlat:'x',opts:null,
@@ -736,7 +737,7 @@ function makeWorker(){
   }catch(e){return null;}
 }
 function compute(records,opts){
-  var light=records.map(function(r){var q=r.type==='quote';return{a:r.a,t:r.t,type:q&&state.linkRecalc&&!state.links.q_acc?'quote_off':r.type,ts:r.ts,p:r.p,s:r.s,lab:r.lab,lt:q?'q_acc':undefined};}).concat(linkRecords(records));
+  var light=records.map(function(r){var q=r.type==='quote';return{a:r.a,t:r.t,type:q&&state.linkRecalc&&!state.links.q_acc?'quote_off':r.type,ts:r.ts,p:r.p,s:r.s,lab:r.lab,lt:q?'q_acc':undefined,v:r.v};}).concat(linkRecords(records));
   return new Promise(function(resolve,reject){
     if(!worker) worker=makeWorker();
     if(worker){
@@ -769,7 +770,7 @@ function run(){
   compute((entActive()||state.q)?state.records.filter(function(r){return (!state.q||r.qok)&&entPass(r);}):state.records,o).then(function(all){
     state.all=all;state.opts=o;
     $('gbusy').classList.remove('on');
-    if(state.plat==='__best__'){var best=null,bw=-1;all.platforms.forEach(function(p){var e=0;['retweet','reply','like','mention','quote','cooc'].forEach(function(n){if(all.res[p][n])e+=all.res[p][n].g.edges.length;});if(e>bw){bw=e;best=p;}});
+    if(state.plat==='__best__'){var best=null,bw=-1;all.platforms.forEach(function(p){var e=0;['retweet','reply','like','mention','quote','cooc','view'].forEach(function(n){if(all.res[p][n])e+=all.res[p][n].g.edges.length;});if(e>bw){bw=e;best=p;}});
       state.plat=best&&bw>0?best:'all';
       if(best&&bw>0&&all.res[best].retweet.g.n===0&&all.res[best].reply.g.n>0)state.net='reply';}
     if(state.plat!=='all'&&!all.res[state.plat]) state.plat='all';
@@ -926,11 +927,12 @@ function show(net,fresh){
   $('tabShare').textContent=netName(p,'retweet');$('tabReply').textContent=netName(p,'reply');
   $('tabLike').textContent=netName(p,'like');$('tabLike').classList.toggle('hide',!hasNet(p,'like'));
   $('tabShare').classList.toggle('hide',!famOn('retweet'));$('tabReply').classList.toggle('hide',!famOn('reply'));$('tabMention').classList.toggle('hide',!hasNet(p,'mention')||!famOn('mention'));
-  $('tabCooc').classList.toggle('hide',!hasNet(p,'cooc')||!famOn('cooc'));$('tabQuote').classList.toggle('hide',!hasNet(p,'quote')||!famOn('quote'));
+  $('tabCooc').classList.toggle('hide',!hasNet(p,'cooc')||!famOn('cooc'));$('tabQuote').classList.toggle('hide',!hasNet(p,'quote')||!famOn('quote'));$('tabView').classList.toggle('hide',!hasNet(p,'view'));
   if((net==='cooc'||net==='quote')&&state._autoType!==p+net){state._autoType=p+net;$('cMode').value='type';}
   updateLinkCounts();updateLinkChips();
   document.querySelectorAll('.topbar .tab').forEach(function(b){b.classList.toggle('on',b.dataset.net===net);});
   var d=cur();if(!d) return;var g=d.g,m=d.m;
+  if(net==='view'){$('netDesc').textContent=pName(p)+' · View (jangkauan): akun yang berinteraksi (repost/reply/quote/mention) → pemilik postingan · bobot edge = jumlah view postingan yang diinteraksi · in-degree berbobot = total view yang terhubung ke akun · platform tidak membuka daftar penonton';}else
   $('netDesc').textContent=pName(p)+' · '+netName(p,net)+': '+(net==='like'?'penyuka (author) → pemilik postingan (target_user)':net==='mention'?'penulis → @akun yang disebut di teks':net==='cooc'?'entitas ↔ entitas yang muncul dalam teks yang sama (tak berarah)':net==='quote'?'sumber → yang dikutip/disebut (Account, Media → Named Entity, Term, Hashtag)':'author → target_user')+' · bobot = jumlah '+(net==='cooc'?'teks':net==='quote'?'kutipan/sebutan':'interaksi')+(net==='cooc'||net==='quote'?' · warna edge = jenis link':'');
   state.visNodes=linkVisSet(g);
   renderKpis(g,m);renderTables(g,m);
@@ -954,8 +956,8 @@ function renderKpis(g,m){
 function tableDefs(g,m,p,net){
   var sh=net==='retweet',lk=net==='like',co=net==='cooc',qu=net==='quote',nm=netName(p,net).toLowerCase();
   return [
-    {t:'In-degree',sub:net==='mention'?'paling banyak di-mention':co?'paling sering muncul bersama node lain':qu?'paling banyak dikutip/disebut':lk?'postingannya paling banyak disukai':sh?'paling banyak di-'+nm:'paling banyak menerima '+nm,val:function(i){return m.inW[i];},f:function(i){return fmt(m.inW[i]);},extra:function(i){return m.inC[i]+' akun';}},
-    {t:'Out-degree',sub:net==='mention'?'paling aktif me-mention':co?'sama dengan in-degree (tak berarah)':qu?'paling aktif mengutip/menyebut':lk?'paling aktif memberi like':sh?'paling aktif '+nm:'paling aktif memberi '+nm,val:function(i){return m.outW[i];},f:function(i){return fmt(m.outW[i]);},extra:function(i){return m.outC[i]+' akun';}},
+    {t:'In-degree',sub:net==='view'?'jangkauan terbesar (total view postingan yang diinteraksi)':net==='mention'?'paling banyak di-mention':co?'paling sering muncul bersama node lain':qu?'paling banyak dikutip/disebut':lk?'postingannya paling banyak disukai':sh?'paling banyak di-'+nm:'paling banyak menerima '+nm,val:function(i){return m.inW[i];},f:function(i){return fmt(m.inW[i]);},extra:function(i){return m.inC[i]+' akun';}},
+    {t:'Out-degree',sub:net==='view'?'paling banyak menyebarkan view (repost/reply/quote/mention postingan ber-view tinggi)':net==='mention'?'paling aktif me-mention':co?'sama dengan in-degree (tak berarah)':qu?'paling aktif mengutip/menyebut':lk?'paling aktif memberi like':sh?'paling aktif '+nm:'paling aktif memberi '+nm,val:function(i){return m.outW[i];},f:function(i){return fmt(m.outW[i]);},extra:function(i){return m.outC[i]+' akun';}},
     {t:'Betweenness',sub:m.betweennessApprox?'aproksimasi ('+fmt(m.pivots)+' sumber)':'perantara jalur terpendek',val:function(i){return m.betweenness[i];},f:function(i){return fmtSci(m.betweenness[i]);}},
     {t:'PageRank',sub:'pengaruh rekursif berbobot',val:function(i){return m.pagerank[i];},f:function(i){return fmtSci(m.pagerank[i]);}}];
 }
@@ -1099,7 +1101,7 @@ function select(n){
   var d=cur(),g=d.g,m=d.m,i=n.id,se=m.sent;view.nbr=new Set();var outs=[],ins=[];
   g.edges.forEach(function(e){if(e.s===i&&e.t!==i){view.nbr.add(e.t);outs.push(e);}if(e.t===i&&e.s!==i){view.nbr.add(e.s);ins.push(e);}});
   outs.sort(function(a,b){return b.w-a.w;});ins.sort(function(a,b){return b.w-a.w;});
-  var nm=netName(state.plat,state.net),verb=state.net==='mention'?['Di-mention oleh','Me-mention']:state.net==='cooc'?['Muncul bersama','Muncul bersama']:state.net==='quote'?['Dikutip/disebut oleh','Mengutip/menyebut']:state.net==='like'?['Disukai oleh','Menyukai postingan']:state.net==='retweet'?['Di-'+nm.toLowerCase()+' oleh','Me-'+nm.toLowerCase()]:['Menerima '+nm.toLowerCase()+' dari','Memberi '+nm.toLowerCase()+' ke'];
+  var nm=netName(state.plat,state.net),verb=state.net==='view'?['Menerima view lewat interaksi dari','Berinteraksi dengan postingan']:state.net==='mention'?['Di-mention oleh','Me-mention']:state.net==='cooc'?['Muncul bersama','Muncul bersama']:state.net==='quote'?['Dikutip/disebut oleh','Mengutip/menyebut']:state.net==='like'?['Disukai oleh','Menyukai postingan']:state.net==='retweet'?['Di-'+nm.toLowerCase()+' oleh','Me-'+nm.toLowerCase()]:['Menerima '+nm.toLowerCase()+' dari','Memberi '+nm.toLowerCase()+' ke'];
   function chips(list,key){return list.slice(0,12).map(function(e){return '<span data-i="'+e[key]+'"'+(e.sN?' style="border-left:3px solid '+sentColor(e.sSum/e.sN)+'"':'')+'>'+esc(dispLabel(g.labels[e[key]]))+' ×'+e.w+'</span>';}).join('')+(list.length>12?' <span class="sub">+'+(list.length-12)+'</span>':'');}
   var dd=$('detail');
   dd.innerHTML='<button class="x" aria-label="Tutup">×</button><h3>'+esc(dispLabel(n.label))+'</h3><div>'+typeBadge(nodeType(n.label))+' ·<span class="dot" style="background:'+commColor(m.community[i])+'"></span> Komunitas '+m.community[i]+' · '+pName(state.plat)+'</div>'+
