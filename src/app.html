@@ -75,6 +75,9 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--panel2);padding:1
 .tab.on{background:var(--accent);color:#fff}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+#pView.viewmode #kpis,#pView.viewmode .graphcard,#pView.viewmode #actorCard,#pView.viewmode #entCard{display:none}
+.vbar{display:grid;grid-template-columns:minmax(90px,36%) 1fr 96px;gap:8px;align-items:center;padding:3px 2px;font-size:12.5px}
+.vbar .bg{background:var(--bg);border-radius:4px;height:11px;overflow:hidden}.vbar .fg{display:block;height:100%;background:var(--accent)}
 .kpi .v{font-size:19px!important}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
 .kpi .l{font-size:11.5px;color:var(--muted)}
@@ -561,6 +564,16 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
           <div class="busy" id="busy"><div style="text-align:center"><div class="spin"></div><span id="busyMsg">Menghitung…</span></div></div>
         </div>
       </section>
+      <section class="card hide" id="viewCard">
+        <div class="phead"><h2>View postingan <span class="sub" id="viewSub"></span></h2>
+          <div style="display:flex;gap:8px;align-items:center"><select id="viewTop" aria-label="Jumlah baris"><option value="10">Top 10</option><option value="25" selected>Top 25</option><option value="50">Top 50</option></select><button class="btn sm" id="viewCsv">Unduh CSV</button></div></div>
+        <div class="kpis" id="viewKpis" style="margin-bottom:14px"></div>
+        <div class="grid2"><div><div class="sub" style="margin-bottom:6px">Akun dengan total view tertinggi</div><div id="viewAcc"></div></div>
+          <div><div class="sub" style="margin-bottom:6px">Total view per hari (tanggal posting)</div><div id="viewTrend"></div></div></div>
+        <div class="sub" style="margin:14px 0 6px">Postingan dengan view tertinggi</div>
+        <div style="overflow-x:auto"><table class="top" id="viewTable"></table></div>
+        <div class="report" id="viewNote" style="margin-top:10px"></div>
+      </section>
       <section class="card" id="actorCard">
         <div class="phead"><h2>Aktor kunci</h2><div class="seg" id="mTabs"></div><select id="mTop" aria-label="Jumlah aktor"><option value="10">Top 10</option><option value="25">Top 25</option><option value="50">Top 50</option></select></div>
         <div class="seg sm hide" id="mTypes" style="margin-bottom:8px"></div>
@@ -617,6 +630,7 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
           <li><b>Leksikon sendiri.</b> Unggah file dua kolom <code>kata,bobot</code> (CSV/TSV), mis. leksikon InSet; leksikon unggahan menggantikan leksikon bawaan (aturan negasi/penguat tetap dipakai, bigram bawaan tidak).</li>
           <li><b>VOSviewer.</b> <i>Normalization</i>: <b>Association strength</b> s<sub>ij</sub> = 2m·c<sub>ij</sub>/(w<sub>i</sub>w<sub>j</sub>) dengan c<sub>ij</sub> = bobot link tak berarah (dua arah dijumlahkan), w<sub>i</sub> = total bobot link node i, m = ½Σw<sub>i</sub> (Van Eck &amp; Waltman, 2009; default VOSviewer), atau <b>None</b> (bobot mentah). Normalisasi dipakai untuk klaster Louvain dan layout VOS; centrality tetap dari bobot mentah. <i>Layout VOS</i>: meminimalkan Σ s<sub>ij</sub>d<sub>ij</sub><sup>a</sup>/a − Σ d<sub>ij</sub><sup>r</sup>/r (attraction a = 2, repulsion r = 1 sebagai default VOSviewer) dengan penurunan gradien; untuk &gt;700 node repulsi diaproksimasi dengan sampel, dan gaya tarik kecil ke pusat ditambahkan agar komponen terpisah tidak menjauh tanpa batas — hasilnya mirip tetapi tidak identik dengan VOSviewer. Klaster aplikasi memakai Louvain (bukan algoritma klaster VOS/Leiden). <i>Ekspor</i>: map file &amp; network file (tab-separated) serta VOSviewer JSON; strength = bobot mentah sehingga VOSviewer dapat menerapkan normalisasinya sendiri.</li>
           <li><b>Account–Account.</b> <i>Mention</i>: edge penulis → setiap @akun yang disebut dalam teks (tweet, reply, komentar, quote), tidak termasuk akun yang sudah menjadi target reply/retweet/quote pada baris yang sama dan tidak termasuk penulis sendiri; satu akun dihitung sekali per teks. <i>Retweet</i> (Share/Repost di platform lain) dan <i>Reply</i> (Komentar) adalah jaringan dari kolom <code>type</code> + <code>target_user</code>. Mencentang/menghapus centang menampilkan/menyembunyikan jaringan; ekspor hanya menyertakan jaringan yang aktif.</li>
+          <li><b>View (X).</b> Tab <i>View</i> di platform X membaca kolom <code>views</code> (juga <code>view_count</code>, <code>impressions</code>, <code>impression_count</code>, <code>tayangan</code>); angka seperti <code>12.345</code>, <code>1,2 rb</code>, <code>3.4K</code>, <code>1,5 jt</code> dikenali. View adalah jumlah tayangan yang dilaporkan platform saat data diambil; tidak mencatat siapa yang melihat sehingga tidak membentuk jaringan dan tidak memengaruhi centrality. Ditampilkan total, median, akun dengan view tertinggi, tren harian menurut tanggal posting, dan postingan teratas.</li>
           <li><b>Edge / Link Types.</b> <i>Co-occurrence</i> (tak berarah): Named Entity ↔ Named Entity (Person, Organisasi, News Site, Lokasi, Tempat) dan Hashtag ↔ Hashtag yang muncul dalam teks yang sama; bobot = jumlah teks. Disimpan sebagai dua edge berlawanan arah sehingga PageRank, betweenness ternormalisasi, densitas, dan modularitas setara dengan graf tak berarah; resiprositas tidak bermakna. <i>Quote</i> (berarah): Account (baris <code>type = quote</code>, target dari <code>target_user</code> atau “QT/RT @akun” di teks), Media → Named Entity (akun News Site menyebut entitas), Akun → Term, Akun → Hashtag; bobot = jumlah kutipan/sebutan. Atribut <code>link_type</code> ada di GEXF. Catatan: co-occurrence menunjukkan kemunculan bersama, bukan hubungan semantik antar-entitas.</li>
           <li><b>Node Types.</b> Akun diberi tipe <i>Person</i>, <i>News Site</i>, atau <i>Organisasi</i> bila namanya cocok dengan alias di daftar (atau dari kolom <code>account_type</code>/<code>node_type</code>); daftar <i>Account</i> memaksa tipe Account; akun lain otomatis Account. <i>Person</i> = akun pribadi/individu (dari daftar Person atau kolom tipe akun bernilai pribadi/individu/tokoh/influencer). Bentuk node menandai tipe (lingkaran Account, bintang Person, kotak News Site, belah ketupat Organisasi, segitiga Lokasi, segitiga terbalik Tempat, segi lima Term, segi enam #Hashtag). Jaringan <b>Multi-tipe</b> menghubungkan akun ke entitas yang disebutnya (bobot = jumlah sebutan); sebutan News Site/Organisasi diarahkan ke akun resminya bila akun itu ada di data. Ini jaringan dua-mode (akun–entitas): centrality di dalamnya membandingkan tipe node yang berbeda, jadi tafsirkan per tipe (gunakan filter tipe di tabel Aktor kunci).</li>
           <li><b>Entitas &amp; kata kunci.</b> Lima kategori (Organisasi, Lokasi, Tempat/Place, Term, #Hashtag) dicocokkan dengan teks per kata utuh, tidak peka huruf besar/kecil, termasuk sinonim (<code>Label: a|b</code>). Bila CSV memiliki kolom <code>organisasi</code>, <code>location</code>/<code>lokasi</code>, <code>place</code>/<code>tempat</code>, <code>term</code>/<code>keyword</code>, atau <code>hashtags</code>, nilainya ikut dipakai: dinormalisasi ke kamus bila cocok, selain itu dihitung apa adanya. “Sebutan” = jumlah baris yang menyebut entitas; sentimen entitas = sentimen teks yang menyebutnya (tidak berarti sentimen <i>terhadap</i> entitas itu). Mode filter atau tombol “Fokus” menghitung ulang jaringan, metrik, dan sentimen hanya dari data yang lolos; baris tanpa teks (mis. like/share tanpa teks) ikut terbuang bila tidak punya kolom entitas.</li>
@@ -1191,17 +1205,17 @@ $('exSent').onclick=function(){
   save(fileBase()+'_'+(state.plat==='all'?'semua_platform':slug(pName(state.plat)))+'_sentimen.csv','﻿'+L.join('\n'),'text/csv');
 };
 $('tpl').onclick=function(){
-  var t='author,text,type,target_user,created_at,platform,sentiment\n'+
-    'akun_a,"Kebijakan baru ini perlu dikaji, setuju?",tweet,,2026-10-01 08:15:00,X,\n'+
-    'akun_b,"RT @akun_a: Kebijakan baru ini perlu dikaji",retweet,akun_a,2026-10-01 08:20:00,X,\n'+
-    'akun_c,"@akun_a Setuju, terutama soal anggaran",reply,akun_a,2026-10-01 09:02:00,X,positif\n'+
-    'akun_e,"Videonya informatif, mantap",comment,akun_a,2026-10-01 10:30:00,TikTok,positif\n'+
-    'akun_f,"",share,akun_a,2026-10-01 11:00:00,Facebook,\n'+
-    'akun_k,"",like,akun_a,2026-10-01 11:05:00,Instagram,\n'+
-    'akun_n,"Ini penting dibaca #pemilu",quote,akun_a,2026-10-01 11:20:00,X,positif\n'+
-    'akun_m,"",like,akun_a,2026-10-01 11:07:00,X,\n'+
-    'akun_g,"Narasumbernya tidak netral",comment,kanal_berita,2026-10-02 07:45:00,YouTube,negatif\n'+
-    'akun_h,"Artikel ini bias dan menyesatkan",comment,portal_x,2026-10-02 08:10:00,Media Online,negatif\n';
+  var t='author,text,type,target_user,created_at,platform,sentiment,views\n'+
+    'akun_a,"Kebijakan baru ini perlu dikaji, setuju?",tweet,,2026-10-01 08:15:00,X,,12500\n'+
+    'akun_b,"RT @akun_a: Kebijakan baru ini perlu dikaji",retweet,akun_a,2026-10-01 08:20:00,X,,\n'+
+    'akun_c,"@akun_a Setuju, terutama soal anggaran",reply,akun_a,2026-10-01 09:02:00,X,positif,830\n'+
+    'akun_e,"Videonya informatif, mantap",comment,akun_a,2026-10-01 10:30:00,TikTok,positif,\n'+
+    'akun_f,"",share,akun_a,2026-10-01 11:00:00,Facebook,,\n'+
+    'akun_k,"",like,akun_a,2026-10-01 11:05:00,Instagram,,\n'+
+    'akun_n,"Ini penting dibaca #pemilu",quote,akun_a,2026-10-01 11:20:00,X,positif,4100\n'+
+    'akun_m,"",like,akun_a,2026-10-01 11:07:00,X,,\n'+
+    'akun_g,"Narasumbernya tidak netral",comment,kanal_berita,2026-10-02 07:45:00,YouTube,negatif,\n'+
+    'akun_h,"Artikel ini bias dan menyesatkan",comment,portal_x,2026-10-02 08:10:00,Media Online,negatif,\n';
   save('template_sna.csv',t,'text/csv');
 };
 

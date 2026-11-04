@@ -4,7 +4,7 @@ const fs = require('fs'), path = require('path');
 const rd = (p) => fs.readFileSync(path.join(__dirname, p), 'utf8');
 const lib = (p) => fs.readFileSync(path.join(__dirname, 'node_modules', p), 'utf8');
 let html = rd('src/app.html');
-const feat = ['feat.js', 'ui2.js', 'ent.js', 'vos.js', 'proj.js', 'kat.js', 'real.js'].map((f) => rd('src/' + f)).join('\n');
+const feat = ['feat.js', 'ui2.js', 'ent.js', 'vos.js', 'proj.js', 'kat.js', 'real.js', 'views.js'].map((f) => rd('src/' + f)).join('\n');
 // gunakan fungsi pengganti agar karakter "$" di kode tidak ditafsirkan oleh String.replace
 html = html
   .replace('/*__FEAT__*/', () => feat)

@@ -6,7 +6,7 @@ function mergeReports(ps){
     for(var k in r.byType)R.byType[k]=(R.byType[k]||0)+r.byType[k];for(var u in r.rawPlatformsUnknown)R.rawPlatformsUnknown[u]=(R.rawPlatformsUnknown[u]||0)+r.rawPlatformsUnknown[u];
     r.missingCols.forEach(function(c){if(R.missingCols.indexOf(c)<0)R.missingCols.push(c);});
     if(!r.hasPlatform)R.hasPlatform=false;else if(!R.platformCol)R.platformCol=r.platformCol;
-    if(r.hasManual){R.hasManual=true;R.manualCol=R.manualCol||r.manualCol;}for(var e in r.extCols)R.extCols[e]=r.extCols[e];});
+    if(r.hasManual){R.hasManual=true;R.manualCol=R.manualCol||r.manualCol;}if(r.viewCol)R.viewCol=R.viewCol||r.viewCol;for(var e in r.extCols)R.extCols[e]=r.extCols[e];});
   return R;
 }
 function loadText(text,name){

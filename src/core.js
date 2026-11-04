@@ -67,6 +67,19 @@ var SNA = (function () {
     return PLATFORM_MAP[k] || PLATFORM_MAP[k.replace(/[-_]+/g, ' ')] || 'lainnya';
   }
 
+  /* Angka tayangan: "12.345", "12,345", "1,2 rb", "3.4K", "1,5 jt", "2M" */
+  function parseCount(s) {
+    var t = String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, '');
+    if (!t) return null;
+    var m = /^([\d.,]+)(k|rb|ribu|m|jt|juta|b|miliar)?$/.exec(t);
+    if (!m) return null;
+    var num = m[1], mul = { k: 1e3, rb: 1e3, ribu: 1e3, m: 1e6, jt: 1e6, juta: 1e6, b: 1e9, miliar: 1e9 }[m[2]] || 1;
+    if (mul > 1) num = num.replace(',', '.');
+    else num = num.replace(/[.,](?=\d{3}(\D|$))/g, '').replace(',', '.');
+    var v = parseFloat(num);
+    return isNaN(v) ? null : Math.round(v * mul);
+  }
+
   /* Turn parsed rows into records. Returns {records, report} */
   function toRecords(parsed) {
     var rows = parsed.rows;
@@ -82,13 +95,14 @@ var SNA = (function () {
     var EXT = { org: ['organisasi', 'organization', 'organisation', 'org'], loc: ['lokasi', 'location', 'user_location', 'kota', 'provinsi'], place: ['place', 'tempat', 'place_name', 'place_full_name'], term: ['term', 'keyword', 'kata_kunci', 'query'], hashtag: ['hashtag', 'hashtags', 'tagar'], atype: ['author_type', 'account_type', 'node_type', 'tipe_akun', 'jenis_akun', 'tipe_node'] };
     var extIdx = {}, extCols = {};
     Object.keys(EXT).forEach(function (k) { EXT[k].some(function (h) { var i = header.indexOf(h); if (i >= 0) { extIdx[k] = i; extCols[k] = h; return true; } return false; }); });
+    var vIdx = -1;
+    ['views', 'view', 'view_count', 'views_count', 'viewcount', 'impressions', 'impression_count', 'tayangan', 'jumlah_view', 'jumlah_tayangan', 'play_count'].some(function (k) { vIdx = header.indexOf(k); return vIdx >= 0; });
     var uIdx = -1;
     ['url', 'link', 'tautan', 'permalink'].some(function (k) { uIdx = header.indexOf(k); return uIdx >= 0; });
-    var vIdx = -1;
-    ['views', 'view_count', 'view', 'tayangan', 'impressions'].some(function (k) { vIdx = header.indexOf(k); return vIdx >= 0; });
     var sIdx = -1;
     ['sentiment', 'sentimen', 'label_sentimen', 'sentiment_label', 'label'].some(function (k) { sIdx = header.indexOf(k); return sIdx >= 0; });
     var rep = { extCols: extCols, hasManual: sIdx >= 0, manualCol: sIdx >= 0 ? header[sIdx] : null, rows: rows.length - 1, byType: {}, unknownType: 0, noAuthor: 0, noTarget: 0, badDate: 0, missingCols: need.filter(function (k) { return idx[k] < 0; }), hasPlatform: pIdx >= 0, platformCol: pIdx >= 0 ? header[pIdx] : null, rawPlatformsUnknown: {} };
+    rep.viewCol = vIdx >= 0 ? header[vIdx] : null;
     var recs = [];
     for (var r = 1; r < rows.length; r++) {
       var row = rows[r];
@@ -123,7 +137,7 @@ var SNA = (function () {
       for (var ek in extIdx) { var ev = String(row[extIdx[ek]] || '').trim(); if (ev) { if (!ext) ext = {}; ext[ek] = ev; } }
       var rec = { a: a, t: t, type: type, ts: ts, p: p, text: idx.text >= 0 ? String(row[idx.text] || '') : '', man: man, ext: ext };
       if (uIdx >= 0) { var uv = String(row[uIdx] || '').trim(); if (/^https?:\/\//i.test(uv)) rec.url = uv; }
-      if (vIdx >= 0) { var vv = parseFloat(String(row[vIdx] || '').replace(/[^\d.]/g, '')); if (vv > 0) rec.v = vv; }
+      if (vIdx >= 0) { var vv = parseCount(row[vIdx]); if (vv != null && vv > 0) rec.v = vv; }
       if (type === 'view' && !(rec.v > 0)) { rep.viewNoCount = (rep.viewNoCount || 0) + 1; continue; }
       recs.push(rec);
     }
@@ -465,6 +479,6 @@ var SNA = (function () {
     return L.join('\n');
   }
 
-  return { parseCSV: parseCSV, toRecords: toRecords, buildGraph: buildGraph, analyze: analyze, toGEXF: toGEXF, pagerank: pagerank, betweenness: betweenness, louvain: louvain, mulberry32: mulberry32, normUser: normUser, normPlatform: normPlatform, associationNormalize: associationNormalize, analyzeAll: analyzeAll, nodeSentiment: nodeSentiment };
+  return { parseCSV: parseCSV, parseCount: parseCount, toRecords: toRecords, buildGraph: buildGraph, analyze: analyze, toGEXF: toGEXF, pagerank: pagerank, betweenness: betweenness, louvain: louvain, mulberry32: mulberry32, normUser: normUser, normPlatform: normPlatform, associationNormalize: associationNormalize, analyzeAll: analyzeAll, nodeSentiment: nodeSentiment };
 })();
 if (typeof module !== 'undefined') module.exports = SNA;

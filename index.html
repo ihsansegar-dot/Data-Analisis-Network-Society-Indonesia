@@ -476,6 +476,9 @@ code{font-family:var(--mono);font-size:11.5px;background:var(--panel2);padding:1
 .tab.on{background:var(--accent);color:#fff}
 .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(92px,1fr));gap:8px}
+#pView.viewmode #kpis,#pView.viewmode .graphcard,#pView.viewmode #actorCard,#pView.viewmode #entCard{display:none}
+.vbar{display:grid;grid-template-columns:minmax(90px,36%) 1fr 96px;gap:8px;align-items:center;padding:3px 2px;font-size:12.5px}
+.vbar .bg{background:var(--bg);border-radius:4px;height:11px;overflow:hidden}.vbar .fg{display:block;height:100%;background:var(--accent)}
 .kpi .v{font-size:19px!important}
 .kpi{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:11px 13px}
 .kpi .l{font-size:11.5px;color:var(--muted)}
@@ -962,6 +965,16 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
           <div class="busy" id="busy"><div style="text-align:center"><div class="spin"></div><span id="busyMsg">Menghitung…</span></div></div>
         </div>
       </section>
+      <section class="card hide" id="viewCard">
+        <div class="phead"><h2>View postingan <span class="sub" id="viewSub"></span></h2>
+          <div style="display:flex;gap:8px;align-items:center"><select id="viewTop" aria-label="Jumlah baris"><option value="10">Top 10</option><option value="25" selected>Top 25</option><option value="50">Top 50</option></select><button class="btn sm" id="viewCsv">Unduh CSV</button></div></div>
+        <div class="kpis" id="viewKpis" style="margin-bottom:14px"></div>
+        <div class="grid2"><div><div class="sub" style="margin-bottom:6px">Akun dengan total view tertinggi</div><div id="viewAcc"></div></div>
+          <div><div class="sub" style="margin-bottom:6px">Total view per hari (tanggal posting)</div><div id="viewTrend"></div></div></div>
+        <div class="sub" style="margin:14px 0 6px">Postingan dengan view tertinggi</div>
+        <div style="overflow-x:auto"><table class="top" id="viewTable"></table></div>
+        <div class="report" id="viewNote" style="margin-top:10px"></div>
+      </section>
       <section class="card" id="actorCard">
         <div class="phead"><h2>Aktor kunci</h2><div class="seg" id="mTabs"></div><select id="mTop" aria-label="Jumlah aktor"><option value="10">Top 10</option><option value="25">Top 25</option><option value="50">Top 50</option></select></div>
         <div class="seg sm hide" id="mTypes" style="margin-bottom:8px"></div>
@@ -1018,6 +1031,7 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
           <li><b>Leksikon sendiri.</b> Unggah file dua kolom <code>kata,bobot</code> (CSV/TSV), mis. leksikon InSet; leksikon unggahan menggantikan leksikon bawaan (aturan negasi/penguat tetap dipakai, bigram bawaan tidak).</li>
           <li><b>VOSviewer.</b> <i>Normalization</i>: <b>Association strength</b> s<sub>ij</sub> = 2m·c<sub>ij</sub>/(w<sub>i</sub>w<sub>j</sub>) dengan c<sub>ij</sub> = bobot link tak berarah (dua arah dijumlahkan), w<sub>i</sub> = total bobot link node i, m = ½Σw<sub>i</sub> (Van Eck &amp; Waltman, 2009; default VOSviewer), atau <b>None</b> (bobot mentah). Normalisasi dipakai untuk klaster Louvain dan layout VOS; centrality tetap dari bobot mentah. <i>Layout VOS</i>: meminimalkan Σ s<sub>ij</sub>d<sub>ij</sub><sup>a</sup>/a − Σ d<sub>ij</sub><sup>r</sup>/r (attraction a = 2, repulsion r = 1 sebagai default VOSviewer) dengan penurunan gradien; untuk &gt;700 node repulsi diaproksimasi dengan sampel, dan gaya tarik kecil ke pusat ditambahkan agar komponen terpisah tidak menjauh tanpa batas — hasilnya mirip tetapi tidak identik dengan VOSviewer. Klaster aplikasi memakai Louvain (bukan algoritma klaster VOS/Leiden). <i>Ekspor</i>: map file &amp; network file (tab-separated) serta VOSviewer JSON; strength = bobot mentah sehingga VOSviewer dapat menerapkan normalisasinya sendiri.</li>
           <li><b>Account–Account.</b> <i>Mention</i>: edge penulis → setiap @akun yang disebut dalam teks (tweet, reply, komentar, quote), tidak termasuk akun yang sudah menjadi target reply/retweet/quote pada baris yang sama dan tidak termasuk penulis sendiri; satu akun dihitung sekali per teks. <i>Retweet</i> (Share/Repost di platform lain) dan <i>Reply</i> (Komentar) adalah jaringan dari kolom <code>type</code> + <code>target_user</code>. Mencentang/menghapus centang menampilkan/menyembunyikan jaringan; ekspor hanya menyertakan jaringan yang aktif.</li>
+          <li><b>View (X).</b> Tab <i>View</i> di platform X membaca kolom <code>views</code> (juga <code>view_count</code>, <code>impressions</code>, <code>impression_count</code>, <code>tayangan</code>); angka seperti <code>12.345</code>, <code>1,2 rb</code>, <code>3.4K</code>, <code>1,5 jt</code> dikenali. View adalah jumlah tayangan yang dilaporkan platform saat data diambil; tidak mencatat siapa yang melihat sehingga tidak membentuk jaringan dan tidak memengaruhi centrality. Ditampilkan total, median, akun dengan view tertinggi, tren harian menurut tanggal posting, dan postingan teratas.</li>
           <li><b>Edge / Link Types.</b> <i>Co-occurrence</i> (tak berarah): Named Entity ↔ Named Entity (Person, Organisasi, News Site, Lokasi, Tempat) dan Hashtag ↔ Hashtag yang muncul dalam teks yang sama; bobot = jumlah teks. Disimpan sebagai dua edge berlawanan arah sehingga PageRank, betweenness ternormalisasi, densitas, dan modularitas setara dengan graf tak berarah; resiprositas tidak bermakna. <i>Quote</i> (berarah): Account (baris <code>type = quote</code>, target dari <code>target_user</code> atau “QT/RT @akun” di teks), Media → Named Entity (akun News Site menyebut entitas), Akun → Term, Akun → Hashtag; bobot = jumlah kutipan/sebutan. Atribut <code>link_type</code> ada di GEXF. Catatan: co-occurrence menunjukkan kemunculan bersama, bukan hubungan semantik antar-entitas.</li>
           <li><b>Node Types.</b> Akun diberi tipe <i>Person</i>, <i>News Site</i>, atau <i>Organisasi</i> bila namanya cocok dengan alias di daftar (atau dari kolom <code>account_type</code>/<code>node_type</code>); daftar <i>Account</i> memaksa tipe Account; akun lain otomatis Account. <i>Person</i> = akun pribadi/individu (dari daftar Person atau kolom tipe akun bernilai pribadi/individu/tokoh/influencer). Bentuk node menandai tipe (lingkaran Account, bintang Person, kotak News Site, belah ketupat Organisasi, segitiga Lokasi, segitiga terbalik Tempat, segi lima Term, segi enam #Hashtag). Jaringan <b>Multi-tipe</b> menghubungkan akun ke entitas yang disebutnya (bobot = jumlah sebutan); sebutan News Site/Organisasi diarahkan ke akun resminya bila akun itu ada di data. Ini jaringan dua-mode (akun–entitas): centrality di dalamnya membandingkan tipe node yang berbeda, jadi tafsirkan per tipe (gunakan filter tipe di tabel Aktor kunci).</li>
           <li><b>Entitas &amp; kata kunci.</b> Lima kategori (Organisasi, Lokasi, Tempat/Place, Term, #Hashtag) dicocokkan dengan teks per kata utuh, tidak peka huruf besar/kecil, termasuk sinonim (<code>Label: a|b</code>). Bila CSV memiliki kolom <code>organisasi</code>, <code>location</code>/<code>lokasi</code>, <code>place</code>/<code>tempat</code>, <code>term</code>/<code>keyword</code>, atau <code>hashtags</code>, nilainya ikut dipakai: dinormalisasi ke kamus bila cocok, selain itu dihitung apa adanya. “Sebutan” = jumlah baris yang menyebut entitas; sentimen entitas = sentimen teks yang menyebutnya (tidak berarti sentimen <i>terhadap</i> entitas itu). Mode filter atau tombol “Fokus” menghitung ulang jaringan, metrik, dan sentimen hanya dari data yang lolos; baris tanpa teks (mis. like/share tanpa teks) ikut terbuang bila tidak punya kolom entitas.</li>
@@ -1224,6 +1238,19 @@ var SNA = (function () {
     return PLATFORM_MAP[k] || PLATFORM_MAP[k.replace(/[-_]+/g, ' ')] || 'lainnya';
   }
 
+  /* Angka tayangan: "12.345", "12,345", "1,2 rb", "3.4K", "1,5 jt", "2M" */
+  function parseCount(s) {
+    var t = String(s == null ? '' : s).trim().toLowerCase().replace(/\s+/g, '');
+    if (!t) return null;
+    var m = /^([\d.,]+)(k|rb|ribu|m|jt|juta|b|miliar)?$/.exec(t);
+    if (!m) return null;
+    var num = m[1], mul = { k: 1e3, rb: 1e3, ribu: 1e3, m: 1e6, jt: 1e6, juta: 1e6, b: 1e9, miliar: 1e9 }[m[2]] || 1;
+    if (mul > 1) num = num.replace(',', '.');
+    else num = num.replace(/[.,](?=\d{3}(\D|$))/g, '').replace(',', '.');
+    var v = parseFloat(num);
+    return isNaN(v) ? null : Math.round(v * mul);
+  }
+
   /* Turn parsed rows into records. Returns {records, report} */
   function toRecords(parsed) {
     var rows = parsed.rows;
@@ -1239,13 +1266,14 @@ var SNA = (function () {
     var EXT = { org: ['organisasi', 'organization', 'organisation', 'org'], loc: ['lokasi', 'location', 'user_location', 'kota', 'provinsi'], place: ['place', 'tempat', 'place_name', 'place_full_name'], term: ['term', 'keyword', 'kata_kunci', 'query'], hashtag: ['hashtag', 'hashtags', 'tagar'], atype: ['author_type', 'account_type', 'node_type', 'tipe_akun', 'jenis_akun', 'tipe_node'] };
     var extIdx = {}, extCols = {};
     Object.keys(EXT).forEach(function (k) { EXT[k].some(function (h) { var i = header.indexOf(h); if (i >= 0) { extIdx[k] = i; extCols[k] = h; return true; } return false; }); });
+    var vIdx = -1;
+    ['views', 'view', 'view_count', 'views_count', 'viewcount', 'impressions', 'impression_count', 'tayangan', 'jumlah_view', 'jumlah_tayangan', 'play_count'].some(function (k) { vIdx = header.indexOf(k); return vIdx >= 0; });
     var uIdx = -1;
     ['url', 'link', 'tautan', 'permalink'].some(function (k) { uIdx = header.indexOf(k); return uIdx >= 0; });
-    var vIdx = -1;
-    ['views', 'view_count', 'view', 'tayangan', 'impressions'].some(function (k) { vIdx = header.indexOf(k); return vIdx >= 0; });
     var sIdx = -1;
     ['sentiment', 'sentimen', 'label_sentimen', 'sentiment_label', 'label'].some(function (k) { sIdx = header.indexOf(k); return sIdx >= 0; });
     var rep = { extCols: extCols, hasManual: sIdx >= 0, manualCol: sIdx >= 0 ? header[sIdx] : null, rows: rows.length - 1, byType: {}, unknownType: 0, noAuthor: 0, noTarget: 0, badDate: 0, missingCols: need.filter(function (k) { return idx[k] < 0; }), hasPlatform: pIdx >= 0, platformCol: pIdx >= 0 ? header[pIdx] : null, rawPlatformsUnknown: {} };
+    rep.viewCol = vIdx >= 0 ? header[vIdx] : null;
     var recs = [];
     for (var r = 1; r < rows.length; r++) {
       var row = rows[r];
@@ -1280,7 +1308,7 @@ var SNA = (function () {
       for (var ek in extIdx) { var ev = String(row[extIdx[ek]] || '').trim(); if (ev) { if (!ext) ext = {}; ext[ek] = ev; } }
       var rec = { a: a, t: t, type: type, ts: ts, p: p, text: idx.text >= 0 ? String(row[idx.text] || '') : '', man: man, ext: ext };
       if (uIdx >= 0) { var uv = String(row[uIdx] || '').trim(); if (/^https?:\/\//i.test(uv)) rec.url = uv; }
-      if (vIdx >= 0) { var vv = parseFloat(String(row[vIdx] || '').replace(/[^\d.]/g, '')); if (vv > 0) rec.v = vv; }
+      if (vIdx >= 0) { var vv = parseCount(row[vIdx]); if (vv != null && vv > 0) rec.v = vv; }
       if (type === 'view' && !(rec.v > 0)) { rep.viewNoCount = (rep.viewNoCount || 0) + 1; continue; }
       recs.push(rec);
     }
@@ -1622,7 +1650,7 @@ var SNA = (function () {
     return L.join('\n');
   }
 
-  return { parseCSV: parseCSV, toRecords: toRecords, buildGraph: buildGraph, analyze: analyze, toGEXF: toGEXF, pagerank: pagerank, betweenness: betweenness, louvain: louvain, mulberry32: mulberry32, normUser: normUser, normPlatform: normPlatform, associationNormalize: associationNormalize, analyzeAll: analyzeAll, nodeSentiment: nodeSentiment };
+  return { parseCSV: parseCSV, parseCount: parseCount, toRecords: toRecords, buildGraph: buildGraph, analyze: analyze, toGEXF: toGEXF, pagerank: pagerank, betweenness: betweenness, louvain: louvain, mulberry32: mulberry32, normUser: normUser, normPlatform: normPlatform, associationNormalize: associationNormalize, analyzeAll: analyzeAll, nodeSentiment: nodeSentiment };
 })();
 if (typeof module !== 'undefined') module.exports = SNA;
 
@@ -2160,17 +2188,17 @@ $('exSent').onclick=function(){
   save(fileBase()+'_'+(state.plat==='all'?'semua_platform':slug(pName(state.plat)))+'_sentimen.csv','﻿'+L.join('\n'),'text/csv');
 };
 $('tpl').onclick=function(){
-  var t='author,text,type,target_user,created_at,platform,sentiment\n'+
-    'akun_a,"Kebijakan baru ini perlu dikaji, setuju?",tweet,,2026-10-01 08:15:00,X,\n'+
-    'akun_b,"RT @akun_a: Kebijakan baru ini perlu dikaji",retweet,akun_a,2026-10-01 08:20:00,X,\n'+
-    'akun_c,"@akun_a Setuju, terutama soal anggaran",reply,akun_a,2026-10-01 09:02:00,X,positif\n'+
-    'akun_e,"Videonya informatif, mantap",comment,akun_a,2026-10-01 10:30:00,TikTok,positif\n'+
-    'akun_f,"",share,akun_a,2026-10-01 11:00:00,Facebook,\n'+
-    'akun_k,"",like,akun_a,2026-10-01 11:05:00,Instagram,\n'+
-    'akun_n,"Ini penting dibaca #pemilu",quote,akun_a,2026-10-01 11:20:00,X,positif\n'+
-    'akun_m,"",like,akun_a,2026-10-01 11:07:00,X,\n'+
-    'akun_g,"Narasumbernya tidak netral",comment,kanal_berita,2026-10-02 07:45:00,YouTube,negatif\n'+
-    'akun_h,"Artikel ini bias dan menyesatkan",comment,portal_x,2026-10-02 08:10:00,Media Online,negatif\n';
+  var t='author,text,type,target_user,created_at,platform,sentiment,views\n'+
+    'akun_a,"Kebijakan baru ini perlu dikaji, setuju?",tweet,,2026-10-01 08:15:00,X,,12500\n'+
+    'akun_b,"RT @akun_a: Kebijakan baru ini perlu dikaji",retweet,akun_a,2026-10-01 08:20:00,X,,\n'+
+    'akun_c,"@akun_a Setuju, terutama soal anggaran",reply,akun_a,2026-10-01 09:02:00,X,positif,830\n'+
+    'akun_e,"Videonya informatif, mantap",comment,akun_a,2026-10-01 10:30:00,TikTok,positif,\n'+
+    'akun_f,"",share,akun_a,2026-10-01 11:00:00,Facebook,,\n'+
+    'akun_k,"",like,akun_a,2026-10-01 11:05:00,Instagram,,\n'+
+    'akun_n,"Ini penting dibaca #pemilu",quote,akun_a,2026-10-01 11:20:00,X,positif,4100\n'+
+    'akun_m,"",like,akun_a,2026-10-01 11:07:00,X,,\n'+
+    'akun_g,"Narasumbernya tidak netral",comment,kanal_berita,2026-10-02 07:45:00,YouTube,negatif,\n'+
+    'akun_h,"Artikel ini bias dan menyesatkan",comment,portal_x,2026-10-02 08:10:00,Media Online,negatif,\n';
   save('template_sna.csv',t,'text/csv');
 };
 
@@ -2880,7 +2908,7 @@ function mergeReports(ps){
     for(var k in r.byType)R.byType[k]=(R.byType[k]||0)+r.byType[k];for(var u in r.rawPlatformsUnknown)R.rawPlatformsUnknown[u]=(R.rawPlatformsUnknown[u]||0)+r.rawPlatformsUnknown[u];
     r.missingCols.forEach(function(c){if(R.missingCols.indexOf(c)<0)R.missingCols.push(c);});
     if(!r.hasPlatform)R.hasPlatform=false;else if(!R.platformCol)R.platformCol=r.platformCol;
-    if(r.hasManual){R.hasManual=true;R.manualCol=R.manualCol||r.manualCol;}for(var e in r.extCols)R.extCols[e]=r.extCols[e];});
+    if(r.hasManual){R.hasManual=true;R.manualCol=R.manualCol||r.manualCol;}if(r.viewCol)R.viewCol=R.viewCol||r.viewCol;for(var e in r.extCols)R.extCols[e]=r.extCols[e];});
   return R;
 }
 function loadText(text,name){
@@ -3135,6 +3163,92 @@ function realBanner(){
     var d=$('demo');if(d){d.textContent='Muat data nyata';d.onclick=loadReal;
       var s=document.createElement('button');s.className='btn';s.textContent='Data contoh sintetis';s.title='Data acak untuk mencoba fitur multi-platform';s.onclick=demo;d.parentNode.insertBefore(s,d.nextSibling);}
   },0);
+})();
+
+/* ===================== View postingan (X) ===================== */
+/* Panel "View postingan" di tab View (X): jumlah tayangan per postingan dari kolom views/view_count/impressions.
+   Bila data punya baris type=view, tab View juga menampilkan jaringan jangkauan (core.js); panel ini
+   tampil di bawah grafik. Bila tidak ada, tab View hanya berisi panel ini (view tidak mencatat SIAPA yang melihat). */
+var VIEW={on:false,only:false};
+function viewPlatOK(p){return p==='x';}
+function viewRecs(){
+  if(!state.records)return [];
+  var p=state.plat,seen=new Map();
+  state.records.forEach(function(r){
+    /* baris type=view adalah edge turunan (bobot = view postingan target), bukan postingan: jangan dihitung */
+    if(r.ps||r.p!==p||r.type==='view'||!(r.v>0)||!inWindow(r))return;
+    var k=r.url||(r.a+'|'+r.text),o=seen.get(k);
+    if(!o||r.v>o.v)seen.set(k,r);
+  });
+  return Array.from(seen.values());
+}
+function viewHasData(p){return !!(state.records&&viewPlatOK(p)&&state.records.some(function(r){return r.p===p&&r.type!=='view'&&r.v>0;}));}
+function fmtBig(v){if(v==null)return '–';if(v>=1e9)return fmt(v/1e9,1)+' M';if(v>=1e6)return fmt(v/1e6,1)+' jt';if(v>=1e4)return fmt(v/1e3,1)+' rb';return fmt(v);}
+function median(a){if(!a.length)return null;var s=a.slice().sort(function(x,y){return x-y;}),m=s.length>>1;return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function enterView(only){
+  VIEW.on=true;VIEW.only=!!only;state.net='view';
+  $('pView').classList.toggle('viewmode',VIEW.only);$('viewCard').classList.remove('hide');
+  document.querySelectorAll('.topbar .tab').forEach(function(b){b.classList.toggle('on',b.dataset.net==='view');});
+  if(VIEW.only)$('netDesc').textContent=pName(state.plat)+' · View: jumlah tayangan per postingan (data ini tidak berisi baris type=view, jadi tidak ada jaringan jangkauan)';
+  renderView();
+}
+function exitView(){
+  if(!VIEW.on)return;VIEW.on=false;VIEW.only=false;
+  $('pView').classList.remove('viewmode');$('viewCard').classList.add('hide');
+}
+function viewTabSync(){var tv=$('tabView');if(tv)tv.classList.toggle('hide',!(state.all&&state.plat!=='all'&&(hasNet(state.plat,'view')||viewHasData(state.plat))));}
+function renderView(){
+  var R=viewRecs(),N=$('viewTop')?+$('viewTop').value:25;
+  var col=state.report&&state.report.viewCol;
+  if(!R.length){
+    $('viewSub').textContent='';
+    $('viewKpis').innerHTML='';$('viewAcc').innerHTML='';$('viewTrend').innerHTML='';$('viewTable').innerHTML='';
+    $('viewNote').innerHTML=col?'Tidak ada baris '+pName(state.plat)+' dengan nilai view pada rentang/filter ini.'
+      :'Data belum memiliki kolom jumlah tayangan. Tambahkan kolom <code>views</code> (juga dikenali: <code>view_count</code>, <code>impressions</code>, <code>impression_count</code>, <code>tayangan</code>) berisi angka view tiap postingan, misalnya <code>12345</code>, <code>12.345</code>, <code>1,2 rb</code>, atau <code>3.4K</code>.';
+    return;
+  }
+  var tot=0,vals=[],acc=new Map(),days=new Map();
+  R.forEach(function(r){tot+=r.v;vals.push(r.v);var o=acc.get(r.a);if(!o){o={v:0,n:0,max:0};acc.set(r.a,o);}o.v+=r.v;o.n++;if(r.v>o.max)o.max=r.v;
+    if(!isNaN(r.ts)){var d=isoDay(r.ts);days.set(d,(days.get(d)||0)+r.v);}});
+  var mx=Math.max.apply(null,vals),med=median(vals);
+  $('viewSub').textContent='· '+fmt(R.length)+' postingan · '+fmt(acc.size)+' akun · kolom '+(col||'views');
+  $('viewKpis').innerHTML=[['Total view',fmtBig(tot),fmt(tot)+' tayangan'],['Postingan',fmt(R.length),'dengan data view'],['Median',fmtBig(med),'view per postingan'],['Rata-rata',fmtBig(tot/R.length),'view per postingan'],['Tertinggi',fmtBig(mx),'satu postingan'],['Akun',fmt(acc.size),'pemilik postingan']]
+    .map(function(k){return '<div class="kpi"><div class="l">'+k[0]+'</div><div class="v">'+k[1]+'</div><div class="s">'+k[2]+'</div></div>';}).join('');
+  var al=Array.from(acc.entries()).sort(function(a,b){return b[1].v-a[1].v;}).slice(0,10),amx=al.length?al[0][1].v:1;
+  $('viewAcc').innerHTML=al.map(function(e){return '<div class="vbar" title="'+esc(dispLabel(e[0]))+' · '+fmt(e[1].n)+' postingan · total '+fmt(e[1].v)+' view"><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+esc(dispLabel(e[0]))+'</span><span class="bg"><span class="fg" style="width:'+(100*e[1].v/amx).toFixed(1)+'%"></span></span><span style="text-align:right;font-family:var(--mono);font-size:11.5px">'+fmtBig(e[1].v)+' <span class="sub">/'+fmt(e[1].n)+'</span></span></div>';}).join('')
+    +'<div class="sub" style="margin-top:4px;font-size:11px">angka = total view / jumlah postingan</div>';
+  var dl=Array.from(days.keys()).sort();
+  if(dl.length){var W=420,H=150,pl=44,pb=20,pt=8,pr=8,iw=W-pl-pr,ih=H-pt-pb,dm=Math.max.apply(null,dl.map(function(d){return days.get(d);}))||1,bw=Math.max(2,iw/dl.length-2);
+    var sv='<svg viewBox="0 0 '+W+' '+H+'" width="100%" style="max-width:'+W+'px">';
+    [0,.5,1].forEach(function(f){var y=pt+ih-ih*f;sv+='<line x1="'+pl+'" x2="'+(W-pr)+'" y1="'+y+'" y2="'+y+'" stroke="rgba(255,255,255,.08)"/><text x="'+(pl-4)+'" y="'+(y+3)+'" style="font-size:9px;fill:#9aa7c7" text-anchor="end">'+fmtBig(dm*f)+'</text>';});
+    dl.forEach(function(d,i){var v=days.get(d),h=ih*v/dm,x=pl+i*(iw/dl.length)+1;sv+='<rect x="'+x.toFixed(1)+'" y="'+(pt+ih-h).toFixed(1)+'" width="'+bw.toFixed(1)+'" height="'+h.toFixed(1)+'" fill="#4f7cff"><title>'+d+': '+fmt(v)+' view</title></rect>';});
+    sv+='<text x="'+pl+'" y="'+(H-5)+'" style="font-size:9px;fill:#9aa7c7">'+dl[0]+'</text><text x="'+(W-pr)+'" y="'+(H-5)+'" style="font-size:9px;fill:#9aa7c7" text-anchor="end">'+dl[dl.length-1]+'</text></svg>';
+    $('viewTrend').innerHTML=sv;}
+  else $('viewTrend').innerHTML='<div class="sub">created_at tidak tersedia.</div>';
+  var top=R.slice().sort(function(a,b){return b.v-a.v;}).slice(0,N);
+  $('viewTable').innerHTML='<thead><tr><th>#</th><th>Akun</th><th>Postingan</th><th>Tanggal</th><th class="r">View</th><th class="r">% total</th></tr></thead><tbody>'+
+    top.map(function(r,i){var t=String(r.text||'').replace(/\s+/g,' ').trim();t=t.length>140?t.slice(0,140)+'…':t;
+      return '<tr><td class="sub">'+(i+1)+'</td><td>'+esc(dispLabel(r.a))+'</td><td style="max-width:460px">'+(r.url?'<a href="'+esc(r.url)+'" target="_blank" rel="noopener" style="color:inherit">'+esc(t||'(tanpa teks)')+' ↗</a>':esc(t||'(tanpa teks)'))+' <span class="sub">'+esc(r.type)+'</span></td><td class="sub">'+(isNaN(r.ts)?'–':isoDay(r.ts))+'</td><td class="r val"><b>'+fmt(r.v)+'</b></td><td class="r sub">'+fmt(100*r.v/tot,1)+'%</td></tr>';}).join('')+'</tbody>';
+  $('viewNote').innerHTML='View = jumlah tayangan yang dilaporkan platform saat data diambil (bisa terus bertambah setelahnya). View tidak mencatat siapa yang melihat, sehingga tidak membentuk jaringan dan tidak memengaruhi centrality. Distribusi view biasanya sangat timpang; median lebih mewakili daripada rata-rata.';
+}
+function viewCsv(){
+  var R=viewRecs().sort(function(a,b){return b.v-a.v;});if(!R.length){toast('Tidak ada data view.');return;}
+  var q=function(v){v=String(v==null?'':v);return /[",\n;]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};
+  var rows=[['author','type','created_at','views','text','url']].concat(R.map(function(r){return [r.a,r.type,isNaN(r.ts)?'':new Date(r.ts).toISOString(),r.v,r.text||'',r.url||''];}));
+  save('view_'+state.plat+'.csv','﻿'+rows.map(function(r){return r.map(q).join(',');}).join('\n'),'text/csv');
+}
+(function(){
+  $('viewTop').onchange=renderView;$('viewCsv').onclick=viewCsv;
+  var _s=show;show=function(n,f){
+    var p=state.plat;
+    if(n==='view'){
+      if(hasNet(p,'view')){var o1=_s('view',f);enterView(false);viewTabSync();return o1;}
+      if(viewHasData(p)){var o0=_s(state.net==='view'?netsOf(p)[0]||'retweet':state.net,f);enterView(true);viewTabSync();return o0;}
+      n=netsOf(p)[0]||'retweet';
+    }
+    exitView();var o=_s(n,f);viewTabSync();return o;};
+  var _r=render;render=function(f){_r(f);try{viewTabSync();if(VIEW.on){if(state.plat!=='all'&&(hasNet(state.plat,'view')||viewHasData(state.plat)))renderView();else exitView();}}catch(e){console.error(e);}};
+  setTimeout(function(){$('tabView').onclick=function(){show('view',false);};},0);
 })();
 
 /* ---------- PDF report ---------- */
