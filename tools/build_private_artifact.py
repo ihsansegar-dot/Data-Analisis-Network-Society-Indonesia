@@ -108,6 +108,8 @@ def main(argv=None):
     ap.add_argument("--keywords", help="mode kata kunci (sama dengan run.py --keywords); label = kata kunci")
     ap.add_argument("--judul", help="awalan judul proyek di aplikasi (bawaan: 'Media Online')")
     ap.add_argument("--entitas", help="JSON kamus entitas aplikasi {eOrg, ePerson, eLoc, ...} (mengganti bawaan)")
+    ap.add_argument("--app", help="nama aplikasi di header/tab/ekspor artifact ini (bawaan: nama aplikasi umum); "
+                    "pakai nama proyek agar artifact berbeda tidak tertukar, mis. 'SNA Explorer — Penyadapan & POLRI'")
     ap.add_argument("--sumber", default="run Oktober + jadwal harian", help="keterangan asal data di banner")
     ap.add_argument("--keep-scrape-labels", action="store_true",
                     help="pakai label saat scraping (bisa campuran versi kamus) alih-alih klasifikasi ulang")
@@ -128,6 +130,8 @@ def main(argv=None):
              if a.keywords else f" Kategori: kamus v{clf.version}, belum tervalidasi.")
     data = {"name": "media_online_data_nyata.csv", "title": f"{a.judul or 'Media Online'} {rng} (data nyata)", "meta": meta,
             "csv": buf.getvalue()}
+    if a.app:
+        data["app"] = a.app
     if a.entitas:
         data["dict"] = json.load(open(a.entitas, encoding="utf-8"))
     if a.csv_out:

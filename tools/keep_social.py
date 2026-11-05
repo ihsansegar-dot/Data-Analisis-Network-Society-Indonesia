@@ -56,6 +56,8 @@ def main():
         RB['meta'] = (RB.get('meta') or '').rstrip() + ' ' + ml[i:]
     if '+ media sosial' not in (RB.get('title') or '') and 'media sosial' in (RL.get('title') or ''):
         RB['title'] = RL['title']
+    if not RB.get('app') and RL.get('app'):
+        RB['app'] = RL['app']
     js = json.dumps(RB, ensure_ascii=False).replace('</', '<\\/')
     out = tb[:mb.start()] + mb.group(1) + js + ';</script>' + tb[mb.end():]
     open(a.out, 'w', encoding='utf-8').write(out)
