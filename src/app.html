@@ -274,6 +274,7 @@ svg text{fill:var(--muted);font-size:10px;font-family:Inter,sans-serif}
 .xtext{max-width:420px;white-space:normal;word-break:break-word}
 .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
 .filters label.f{flex:0 1 auto}
+.anz h4{margin:16px 0 6px;font-size:14px;color:var(--text,#e6ebf5);display:flex;align-items:center;gap:8px}.anz p,.anz li{font-size:13px;line-height:1.65;color:var(--muted)}.anz p b,.anz li b{color:var(--text,#e6ebf5);font-weight:600}.anz table{margin:8px 0 4px}.anzl,.anzr{padding-left:18px;margin:4px 0}.anzr li{font-size:12px}.anzb{font-size:10.5px;font-weight:600;border-radius:5px;padding:1px 7px;border:1px solid}.anzb.hi{color:var(--pos);border-color:rgba(46,211,160,.4)}.anzb.md{color:var(--warn);border-color:rgba(245,184,74,.4)}.anzb.lo{color:var(--neg);border-color:rgba(248,113,113,.4)}
 </style>
 <script>/* Nama aplikasi per artifact: window.REALDATA.app (artifact pribadi) menimpa nama bawaan, agar tiap proyek (mis. Partai Islam vs Penyadapan & POLRI) tidak tertukar judulnya. */
 function appName(){var R=window.REALDATA;return (R&&R.app)||"Jaringan Politik Partai Islam di Indonesia";}
@@ -619,6 +620,14 @@ document.addEventListener("DOMContentLoaded",applyAppName);</script>
         </div>
       </section>
     </div>
+
+    <section class="card" id="anzCard">
+      <div class="phead"><h2>Analisis ilmiah: sentimen &amp; jaringan <span class="sub" id="anzSub"></span></h2>
+        <div style="display:flex;gap:8px"><button class="btn sm" id="anzCopy">Salin teks</button><button class="btn sm" id="anzMd">Unduh .md</button></div></div>
+      <p class="sub" style="margin:-4px 0 10px;font-size:12px">Draf interpretasi otomatis: angka dihitung ulang dari platform, jaringan, rentang waktu, dan filter yang sedang aktif; teori Ilmu Komunikasi dan analisis jaringan sosial dipanggil hanya bila polanya muncul di data. Periksa dan sunting sebelum dikutip.</p>
+      <div class="kpis" id="anzTiles" style="margin-bottom:12px"></div>
+      <div id="anzBody" class="anz"></div>
+    </section>
 
     <section class="card">
       <details class="notes">
